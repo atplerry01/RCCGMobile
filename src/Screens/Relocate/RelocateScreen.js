@@ -2,68 +2,40 @@ import React, { Component } from 'react';
 import { AsyncStorage } from 'react-native';
 import { WebView } from 'react-native-webview';
 
-export default class StackSelection extends Component {
+export default class RelocateScreen extends Component {
 
     constructor(props) {
         super(props);
 
         this.state = {
-            model: {},
-            amount: '',
-            customerEmail: '',
-            subAccountID: '',
-            transRef: '',
-            paymentItem: '',
-            stackModel: {},
-            userStore: {},
-            paymentModel: {}
+          
         }
     }
 
     onNavigationStateChange = navState => {
         const { stackModel, amount } = this.state;
 
-        if (navState.url.indexOf('http://google.com/?page=close') === 0) {
-            this.props.navigation.navigate('PaymentStatus', { stackModel: JSON.stringify(stackModel), amount: JSON.stringify(amount), gateway: JSON.stringify('flutterwave') });
-        }
+        console.log('moving... ', navState.url);
 
-        if (navState.url.indexOf('https://ravesandboxapi.flutterwave.com/flwv3-pug/getpaidx/api/complete') === 0) {
-            this.props.navigation.navigate('PaymentStatusModule', { stackModel: JSON.stringify(stackModel), amount: JSON.stringify(amount), gateway: JSON.stringify('flutterwave') });
-        } else if (navState.url.indexOf('http://google.com/?page=close') === 0) {
-            this.props.navigation.navigate('PaymentStatus', { stackModel: JSON.stringify(stackModel), amount: JSON.stringify(amount), gateway: JSON.stringify('flutterwave') });
-        } else if (navState.url.indexOf('http://google.com/?page=success') === 0) {
-            this.props.navigation.navigate('PaymentStatusModule', { stackModel: JSON.stringify(stackModel), amount: JSON.stringify(amount), gateway: JSON.stringify('flutterwave') });
-        } else if (navState.url.indexOf('http://google.com/?page=failure') === 0) {
-            this.props.navigation.navigate('PaymentStatusModule', { stackModel: JSON.stringify(stackModel), amount: JSON.stringify(amount), gateway: JSON.stringify('flutterwave') });
-        }
-
-        // https://qa.interswitchng.com/webpay/Demo/ResponsePage
-        if (navState.url.indexOf('https://qa.interswitchng.com/webpay/Demo/ResponsePage') === 0) {
-            this.props.navigation.navigate('PaymentStatusModule', { stackModel: JSON.stringify(stackModel), amount: JSON.stringify(amount), gateway: JSON.stringify('interswitch') });
-        }
     };
 
     async componentDidMount() {
-        const { navigation } = this.props;
-        const paySwichDetail = navigation.getParam('paydetail', 'NO-ID');
-        const amount = navigation.getParam('amount', 'NO-ID');
-
-        const userToken = await this.getStorageItem('@userToken');
-
-        if (userToken && userToken !== 'none') {
-            const userStore = JSON.parse(userToken);
-            this.setState({ userStore })
-        }
-
-        if (paySwichDetail && paySwichDetail !== 'NO-ID') {
-            const stackModel = JSON.parse(paySwichDetail);
-            this.setState({ stackModel, amount });
-        }
+      
     }
 
-    renderWebView() {
 
-        const interTemp = this.webViewTemplate();
+    render() {
+        const { firstPayload, secondPayload } = this.state;
+
+        return (
+            <React.Fragment>
+                { this.renderWebView() }
+            </React.Fragment>
+        );
+    }
+
+    renderWebView(firstPayload, secondPayload) {
+        const interTemp = this.webViewTemplate(firstPayload, secondPayload);
 
         return (<WebView
             source={{ html: interTemp, baseUrl: 'web/' }}
@@ -77,48 +49,7 @@ export default class StackSelection extends Component {
 
     }
 
-    render() {
-        return (
-            <React.Fragment>
-                {this.renderWebView()}
-            </React.Fragment>
-        );
-    }
-
     webViewTemplate() {
-        const { userStore, stackModel, amount } = this.state;
-
-        let model = {};
-        let flutterDisplay = 'none';
-        let interswitchDisplay = 'none';
-
-        if (stackModel) {
-            model = {
-                churchName: stackModel.churchName,
-                itemName: stackModel.itemName,
-                orderId: stackModel.orderId,
-                orderId: stackModel.orderId,
-                transRef: stackModel.transRef
-            };
-        }
-
-        if (stackModel.gatewayFlutterwave && stackModel.gatewayFlutterwave.length >= 1) {
-            model.flutterSubAccountID = stackModel.gatewayFlutterwave[0].subAccountID;
-            flutterDisplay = 'block';
-        }
-
-        if (stackModel.gatewayInterswitch && stackModel.gatewayInterswitch.length >= 1) {
-            interswitchDisplay = 'block';
-            model.gatewayInterswitch = stackModel.gatewayInterswitch[0];
-            model.currency = stackModel.gatewayInterswitch[0].currency;
-            model.merchantCode = stackModel.gatewayInterswitch[0].merchant_code;
-        }
-
-        if (userStore) {
-            model.email = userStore.email,
-                model.fullName = userStore.fullName,
-                model.phoneNumber = '' // TODO:*
-        }
 
         const html = `<!DOCTYPE html>
     <html lang="en">
@@ -339,7 +270,7 @@ export default class StackSelection extends Component {
                                     <form id="RegistrationForm" data-toggle="validator">
                                         <p><strong>Payment Item</strong></p>
                                         <div class="form-group">
-                                            <input type="text" value="${model.itemName}" 
+                                            <input type="text" value="Cart Item(s)" 
                                             class="form-control-input" id="firstname"
                                                 placeholder="First Name" readonly>
                                             <div class="help-block with-errors"></div>
@@ -370,13 +301,11 @@ export default class StackSelection extends Component {
 
                                         <div class="row">
                                             <div class="column" style="display: ${flutterDisplay}">
-                                                <a href="http://hr.goldenmemoria.com/paystack-flutter.html?email=${model.email}&amount=${amount}&phone=${model.phoneNumber}&flutterId=${model.flutterSubAccountID}&transRef=${model.transRef}" class="form-control-submit-button clickMe">Flutterwave</a>
+                                                <a href="http://hr.goldenmemoria.com/paystack-flutter.html?email=${model.email}&amount=${secondPayload.amount}&phone=${model.phoneNumber}&flutterId=${model.flutterSubAccountID}&transRef=${model.transRef}" class="form-control-submit-button clickMe">Flutterwave</a>
                                             </div>
 
                                             <div class="column" style="display: ${interswitchDisplay}">
-                                                <a href=""></a>
-                                                         
-                                                <a href="http://hr.goldenmemoria.com/paystack-switch.php?pay_item_id=${model.orderId}&transRef=${model.transRef}&amount=${model.amount * 100}&currency=${model.currency}&fullName=${model.fullName}&itemName=${model.itemName}&merchant_code=${model.merchantCode}" class="form-control-submit-button clickMe">Interswich</a>
+                                                <a href="http://hr.goldenmemoria.com/paystack-switch.php?pay_item_id=${model.orderId}&transRef=${model.transRef}&amount=${model.amount}&currency=${model.currency}&fullName=${model.fullName}&itemName=${model.itemName}&merchant_code=${model.merchantCode}" class="form-control-submit-button clickMe">Interswich</a>
                                             </div>
                                         </div>
     
@@ -392,50 +321,6 @@ export default class StackSelection extends Component {
                 </div>
             </div>
         </header>
-    
-    
-    
-    
-        <script>
-            const API_publicKey = "FLWPUBK-4cad8e638ee4de851cbdd4409ebbbf12-X";
-    
-            function payWithRave() {
-                var x = getpaidSetup({
-                    PBFPubKey: API_publicKey,
-                    customer_email: "${model.email}",
-                    amount: ${amount},
-                    customer_phone: "${model.phoneNumber}",
-                    currency: "NGN",
-                    payment_options: "card",
-                    subaccounts: [{
-                        id: "${model.flutterSubAccountID}",
-                        transaction_charge_type: "percentage_subaccount",
-                        transaction_charge: "0.95"
-                    }
-                    ],
-                    txref: "${model.transRef}",
-    
-                    onclose: function () { },
-                    callback: function (response) {
-                        var txref = response.tx.txRef; // collect flwRef returned and pass to a 					server page to complete status check.
-                        
-                        if (
-                            response.tx.chargeResponseCode == "00" ||
-                            response.tx.chargeResponseCode == "0"
-                        ) {
-                            // redirect to a success page
-                            document.location.href = 'http://google.com',true;
-                        } else {
-                            // redirect to a failure page.
-                            document.location.href = 'http://google.com',true;
-                        }
-    
-                        x.close(); // use this to close the modal immediately after payment.
-                        document.location.href = 'http://google.com',true;
-                    }
-                });
-            }
-        </script>
     
     </body>
     

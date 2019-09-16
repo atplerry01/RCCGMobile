@@ -23,6 +23,8 @@ export default class ParishPayment extends Component {
     }
 
     render() {
+        const { productCartItemNumber } = this.state;
+
         return (<Container style={Style.bgMain}>
 
             <Content style={Style.layoutInner} contentContainerStyle={Style.layoutContent}>

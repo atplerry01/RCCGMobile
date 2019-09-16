@@ -53,10 +53,9 @@ export default class PaymentStatus extends Component {
         return <View><Text>Sample</Text></View>
     }
 
-
     render() {
 
-        const { paymentTicket } = this.state;
+        const { paymentTicket, productCartItemNumber } = this.state;
 
         return (<Container style={Style.bgMain}>
 

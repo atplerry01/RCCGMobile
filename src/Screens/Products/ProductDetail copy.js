@@ -2,6 +2,7 @@ import TabNav from '@Component/Common/TabNav';
 import Styles from '@Theme/ParishDetail';
 import Style from '@Theme/Style';
 import axios from 'axios';
+import { MapView } from 'expo';
 import { Button, Container, Content, Icon, Text, View } from 'native-base';
 import React, { Component } from 'react';
 import { AsyncStorage, ImageBackground, StatusBar, ToastAndroid } from 'react-native';
@@ -28,26 +29,6 @@ export default class ProductDetail extends Component {
         amount: 1
     }
 
-
-    onSubmit() {
-        let errors = {};
-
-        ['firstname', 'lastname', 'email', 'password']
-            .forEach((name) => {
-                let value = this[name].value();
-
-                if (!value) {
-                    errors[name] = 'Should not be empty';
-                } else {
-                    if ('password' === name && value.length < 6) {
-                        errors[name] = 'Too short';
-                    }
-                }
-            });
-
-        this.setState({ errors });
-    }
-
     onChangeText(text) {
         ['currencyCode', 'amount', 'parish', 'parishItem']
             .map((name) => ({ name, ref: this[name] }))
@@ -71,15 +52,47 @@ export default class ProductDetail extends Component {
     }
 
     componentDidMount = async () => {
-
+        const userToken = await this.getStorageItem('@userToken');
         const { navigation } = this.props;
 
-        const productId = navigation.getParam('itemId', 'NO-ID');
-        console.log(productId);
+        const itemIdRaw = navigation.getParam('itemId', 'NO-ID');
+        const itemRaw = navigation.getParam('item', 'NO-ITEM');
+        const parishCodeRaw = navigation.getParam('parishCode', 'NO-ITEM');
+
+        if (userToken  && userToken !== 'none') {
+            const userData = JSON.parse(userToken);
+            this.setState({ userData });
+        }
+
+        if (parishCodeRaw && parishCodeRaw !== 'NO-ITEM') {
+            parishCode = JSON.parse(parishCodeRaw);
+            this.setState({ parishCode });
+        }
+
+        if (itemRaw && itemRaw !== 'NO-ITEM') {
+            item = JSON.parse(itemRaw);
+            this.setState({ itemDetails: item });
+        }
 
         this.getCartItemNumber();
     }
 
+
+    renderMapView() {
+        const { longitude, latitude } = this.state;
+
+        if (latitude) {
+            return (<MapView
+                style={{ flex: 1 }}
+                initialRegion={{
+                    latitude,
+                    longitude,
+                    latitudeDelta: 0.0922,
+                    longitudeDelta: 0.0421
+                }}>
+            </MapView>)
+        }
+    }
 
     renderContent() {
         const { itemDetails, parishDetail, amount, errors = {} } = this.state;
@@ -207,6 +220,32 @@ export default class ProductDetail extends Component {
         );
     }
 
+    onlinePaymentPlatform() {
+        const { itemDetails, userData, parishCode } = this.state;
+        this.registerPayment(userData, itemDetails, parishCode);
+    }
+
+    registerPayment(userStore, itemDetails, parishCode) {        
+        const pcode = parishCode.replace(/"/g, "");
+        var data = `userID=${userStore.userID}&currency=${itemDetails.currency}&amount=${itemDetails.itemAmount}&parishCode=${pcode}&itemID=${itemDetails.id}&channel=app`;
+
+        return axios
+            .post(config.apiBaseUrl + "/payment/offeringsRegister", data, {
+                headers: {
+                    "Authorization": `Bearer ${userStore.access_token}`,
+                    "Content-Type": "application/x-www-form-urlencoded"
+                }
+            })
+            .then(resp => {
+                this.props.navigation.navigate('PaymentStack', { paydetail: JSON.stringify(resp.data.data), amount: itemDetails.itemAmount })
+            })
+            .catch(error => {                
+                ToastAndroid.show('Register Payment: ' + error.message, ToastAndroid.SHORT);
+            });
+    }
+
+
+
 
 
     getParishDetail = (userStore, parishCode) => {
@@ -226,6 +265,19 @@ export default class ProductDetail extends Component {
                 ToastAndroid.show(`An Error Occur - ${error.message}`, ToastAndroid.SHORT);
             });
     }
+
+    getParishDetail2 = (parishCode) => {
+        axios.get(config.apiUrl + `/api/parishes/${parishCode}`).then(res => {
+            var data = res.data ? res.data : false;
+
+            if (data) {
+                this.setState({ parishDetail: data });
+            }
+        }).catch(err => {
+            this.setState({ parishDetailFound: false });
+        })
+    }
+
 
     saveStorageItem = async (key, value) => {
         try {

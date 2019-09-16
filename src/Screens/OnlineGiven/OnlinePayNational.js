@@ -107,7 +107,7 @@ export default class OnlinePayNational extends Component {
 
 
     render() {
-        let { errors = {}, parish, currencyCode, amount, parishItem, parishItems } = this.state;
+        let { errors = {}, parish, currencyCode, amount, parishItem, parishItems, productCartItemNumber } = this.state;
 
         var parishItemLists = [];
 

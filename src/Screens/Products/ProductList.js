@@ -5,7 +5,7 @@ import Style from '@Theme/Style';
 import axios from 'axios';
 import { Container, Content } from 'native-base';
 import React from 'react';
-import { AsyncStorage, FlatList, ImageBackground, ToastAndroid, View } from 'react-native';
+import { AsyncStorage, FlatList, ImageBackground, ToastAndroid, TouchableHighlight, View } from 'react-native';
 import Product from '../../Component/Resource/Product';
 import { config } from '../../helpers';
 
@@ -59,20 +59,24 @@ export default class ProductList extends React.Component {
                         <FlatList
                             data={productItemLists}
                             style={FavStyles.item}
-                            // extraData={this.state.refresh}
-                            // refreshing={this.state.refresh}
+
                             renderItem={({ item, index }) => (
-                                <Product
-                                    id={item.id}
-                                    item_name={item.item_name}
-                                    image_url={item.image_url}
-                                    item_code={item.item_code}
-                                    item_description={item.item_description}
-                                    item_amount={item.item_amount}
-                                    quantity={item.quantity}
-                                    favorite={item.favorite ? true : false}
-                                    onAddOrRemoveItemCart={() => this.onAddOrRemoveItemCart(item, index)}
-                                />
+                                <TouchableHighlight underlayColor='transparent'
+                                    onPress={() => { this.props.navigation.navigate('ProductDetail', { itemId: item.id }) }}>
+                                    <Product
+                                        id={item.id}
+                                        item_name={item.item_name}
+                                        image_url={item.image_url}
+                                        item_code={item.item_code}
+                                        item_description={item.item_description}
+                                        item_amount={item.item_amount}
+                                        quantity={item.quantity}
+                                        favorite={item.favorite ? true : false}
+                                        onAddOrRemoveItemCart={() => this.onAddOrRemoveItemCart(item, index)}
+                                    />
+                                </TouchableHighlight>
+
+
                             )}
                         />
                     </View>

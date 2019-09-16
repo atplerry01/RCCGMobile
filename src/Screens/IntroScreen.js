@@ -27,7 +27,7 @@ class IntroScreen extends Component {
     const userToken = await this.getStorageItem('@userToken');
     if (userToken && userToken !== 'none') {
       // TODO: pull basic information here
-      this.props.navigation.navigate('DashboardModule'); // DashboardModule
+      this.props.navigation.navigate('RelocateModule'); // DashboardModule
     } else {
       this.props.navigation.navigate('Auth');
     }

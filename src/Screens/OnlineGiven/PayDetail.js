@@ -48,7 +48,7 @@ export default class PayDetail extends Component {
     }
 
     render() {
-        let { userProfile } = this.state;
+        let { userProfile, productCartItemNumber } = this.state;
 
         return <Container style={Style.bgMain}>
             <StatusBar backgroundColor="#7E8BF5" animated barStyle="light-content" />

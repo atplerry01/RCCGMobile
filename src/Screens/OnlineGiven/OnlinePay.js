@@ -212,7 +212,7 @@ export default class OnlinePay extends Component {
     }
 
     render() {
-        let { errors = {}, parish, currencyCode, amount, parishItem, myParishItems } = this.state;
+        let { errors = {}, parish, currencyCode, amount, parishItem, myParishItems, productCartItemNumber } = this.state;
 
         var parishItemLists = [];
 

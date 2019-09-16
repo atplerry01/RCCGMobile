@@ -29,7 +29,8 @@ const ProductStack = createStackNavigator(
                     }
                 }
             }
-        },Product: {
+        },
+        Product: {
             screen: ProductScreen,
             navigationOptions: ({ navigation }) => {
                 return {
@@ -52,7 +53,6 @@ const ProductStack = createStackNavigator(
                 }
             }
         },
-        
         ProductCartReview: {
             screen: ProductCartReview,
             navigationOptions: ({ navigation }) => {
