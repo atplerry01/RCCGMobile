@@ -1,5 +1,6 @@
 import TabNav from '@Component/Common/TabNav';
 import colors from '@Constants/Colors';
+import FavStyles from '@Screen/Member/Favorites/Style';
 import Styles from '@Theme/MemberHome';
 import Style from '@Theme/Style';
 import axios from 'axios';
@@ -29,7 +30,7 @@ export default class ProductType extends Component {
                     <TouchableOpacity style={Styles.btnBox} onPress={() => {
                         this.props.navigation.navigate('ProductSubType', { itemId: entity.id })
                     }}>
-                        <Image source={require('@Asset/images/btn-property.png')} resizeMode={'cover'} style={Styles.btnImg} />
+                        <Image source={{ uri: entity.image_url }} resizeMode={'cover'} style={FavStyles.itemImg} />
                         <Text style={Styles.btnText}>{entity.slug}</Text>
                     </TouchableOpacity>
                 )
@@ -44,6 +45,17 @@ export default class ProductType extends Component {
         const itemId = this.props.navigation.getParam('itemId', 'NO-ID');
         // const code = navigation.getParam('code', 'NO-ID'); // TODO:
         this.getProductTypes(itemId);
+        this.getCartItemNumber();
+        
+    }
+
+    async getCartItemNumber() {
+        const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
+        if (productCartItemsStore && productCartItemsStore !== 'none') {
+            const productCartItems2 = JSON.parse(productCartItemsStore);
+            const productCartItems = JSON.parse(productCartItems2);
+            this.setState({ productCartItemNumber: productCartItems.length });
+        }
     }
 
     render() {
@@ -78,8 +90,11 @@ export default class ProductType extends Component {
 
             </Content>
 
-            <TabNav navigation={this.props.navigation} />
-
+  
+            <TabNav navigation={this.props.navigation}
+                    cartValue={productCartItemNumber? productCartItemNumber : 0} 
+                    gotoCart={() => this.props.navigation.navigate('ProductCartReview')} 
+                />
         </Container>
         );
     }
@@ -89,7 +104,6 @@ export default class ProductType extends Component {
             .get(config.apiBaseUrl + `/product/parents?code=01&parentId=${parentId}`)
             .then(resp => {
                 const entity = resp.data.data;
-                console.log('entity: ', entity);
                 this.setState({ productTypes: entity })
             })
             .catch(error => {

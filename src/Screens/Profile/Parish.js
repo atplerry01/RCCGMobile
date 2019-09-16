@@ -65,6 +65,8 @@ export default class MyParishScreen extends Component {
         const userTokenStore = await this.getStorageItem('@userToken');
         const userProfileStore = await this.getStorageItem('@userProfileStore');
 
+        this.getCartItemNumber();
+
         if (userTokenStore && userTokenStore !== 'none' && userProfileStore && userProfileStore !== 'none') {
             const userToken = JSON.parse(userTokenStore);
 
@@ -80,6 +82,16 @@ export default class MyParishScreen extends Component {
         } else {
             ToastAndroid.show('You have no active Parish', ToastAndroid.SHORT);
             this.props.navigation.navigate('ParishSelector');
+        }
+    }
+
+    
+    async getCartItemNumber() {
+        const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
+        if (productCartItemsStore && productCartItemsStore !== 'none') {
+            const productCartItems2 = JSON.parse(productCartItemsStore);
+            const productCartItems = JSON.parse(productCartItems2);
+            this.setState({ productCartItemNumber: productCartItems.length });
         }
     }
 
@@ -179,6 +191,8 @@ export default class MyParishScreen extends Component {
 
     render() {
 
+        const { productCartItemNumber } = this.state;
+        
         return (
             <Container style={Style.bgMain}>
                 <StatusBar backgroundColor="rgba(0,0,0,0)" animated barStyle="dark-content" />
@@ -187,8 +201,15 @@ export default class MyParishScreen extends Component {
                     {this.renderContent()}
                 </Content>
 
-                <TabNav navigation={this.props.navigation} />
+  
+                <TabNav navigation={this.props.navigation}
+                    cartValue={productCartItemNumber? productCartItemNumber : 0} 
+                    gotoCart={() => this.props.navigation.navigate('ProductCartReview')} 
+                />
+
             </Container>
+
+
 
         );
     }

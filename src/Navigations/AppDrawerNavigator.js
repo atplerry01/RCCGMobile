@@ -76,7 +76,7 @@ const AppDrawerNavigator = createDrawerNavigator({
       activeTintColor: colors.green01
     },
     headerMode: "none",
-    initialRouteName:  "ParishModule"//"DashboardModule",
+    initialRouteName:  "DashboardModule",
   });
 
 export default AppDrawerNavigator;

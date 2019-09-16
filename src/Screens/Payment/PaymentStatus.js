@@ -27,6 +27,7 @@ export default class PaymentStatus extends Component {
         const stackModelStr = navigation.getParam('stackModel', 'none');
         const amountStr = navigation.getParam('amount', 'none');
         const gatewayStr = navigation.getParam('gateway', 'none');
+        const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
 
         // if (stackModelStr && stackModelStr !== 'none') {
         //     const stackModel = JSON.parse(stackModelStr);
@@ -42,14 +43,22 @@ export default class PaymentStatus extends Component {
         if (userToken && stackModelStr) {
             const userStore = JSON.parse(userToken);
             const stackModel = JSON.parse(stackModelStr);
-            
+
             this.getPaymentConfirmation(userStore, stackModel, gatewayStr);
+            this.getCartItemNumber(productCartItemsStore);
+        }
+    }
+
+    getCartItemNumber(productCartItemsStore) {
+        if (productCartItemsStore && productCartItemsStore !== 'none') {
+            const productCartItems = JSON.parse(productCartItemsStore);
+            this.setState({ productCartItemNumber: productCartItems.length });
         }
     }
 
     render() {
 
-        const { paymentTicket } = this.state;
+        const { paymentTicket, productCartItemNumber } = this.state;
 
         return (<Container style={Style.bgMain}>
 
@@ -71,7 +80,7 @@ export default class PaymentStatus extends Component {
                     <View style={Styles.overview}>
                         <Text style={Styles.overviewTitle}>Payment Status</Text>
                     </View>
-                    
+
                     <View>
                         <Text>Status: {paymentTicket.status}</Text>
                         <Text>Description: {paymentTicket.status_description}</Text>
@@ -110,8 +119,11 @@ export default class PaymentStatus extends Component {
 
             </Content>
 
-            <TabNav navigation={this.props.navigation} />
 
+            <TabNav
+                cartValue={productCartItemNumber ? productCartItemNumber : 0}
+                gotoCart={() => this.props.navigation.navigate('ProductCartReview')}
+            />
         </Container>
         );
     }
@@ -119,7 +131,7 @@ export default class PaymentStatus extends Component {
 
     getPaymentConfirmation(userModel, stackModel, gatewayStr) {
 
-        const gateway = gatewayStr.replace(/"/g,"");
+        const gateway = gatewayStr.replace(/"/g, "");
 
         // const { gateway, payRef, userID, userStore } = this.state;
         // let userInfo = {};
@@ -129,7 +141,7 @@ export default class PaymentStatus extends Component {
         // }
 
         var data = `userID=${userModel.userID}&flsPayRef=${stackModel.transRef}&gatewayName=${gateway}&gatewayAccountId=JocZgmP9Yo&pay_token=&token_exp_date=&card_type=&last_digits=&pay_type=`;
-        
+
         return axios
             .post(config.apiBaseUrl + "/payment/offeringsRegisterConfirmation", data, {
                 headers: {
@@ -152,7 +164,7 @@ export default class PaymentStatus extends Component {
             await AsyncStorage.removeItem(key);
         } catch (error) {
             // Error retrieving data
-            
+
         }
     }
 
@@ -161,7 +173,7 @@ export default class PaymentStatus extends Component {
             await AsyncStorage.setItem(key, JSON.stringify(value));
         } catch (error) {
             // Error retrieving data
-            
+
         }
     };
 
@@ -171,7 +183,7 @@ export default class PaymentStatus extends Component {
             result = await AsyncStorage.getItem(key) || 'none';
         } catch (error) {
             // Error retrieving data
-            
+
         }
         return result;
     }

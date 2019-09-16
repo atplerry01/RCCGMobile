@@ -48,7 +48,6 @@ export default class StackSelection extends Component {
     async componentDidMount() {
         const { navigation } = this.props;
         const paySwichDetail = navigation.getParam('paydetail', 'NO-ID');
-
         const userToken = await this.getStorageItem('@userToken');
 
         if (userToken && userToken !== 'none') {
@@ -58,13 +57,26 @@ export default class StackSelection extends Component {
 
         if (paySwichDetail && paySwichDetail !== 'NO-ID') {
             const stackModel = JSON.parse(paySwichDetail);
-            this.setState({ stackModel: stackModel[0], amount: stackModel[0].amount });
+            const firstPayload = stackModel[0];
+            const secondPayload = stackModel[1];
+
+            this.setState({ firstPayload, secondPayload });
         }
     }
 
-    renderWebView() {
 
-        const interTemp = this.webViewTemplate();
+    render() {
+        const { firstPayload, secondPayload } = this.state;
+
+        return (
+            <React.Fragment>
+                { firstPayload && secondPayload && this.renderWebView(firstPayload, secondPayload) }
+            </React.Fragment>
+        );
+    }
+
+    renderWebView(firstPayload, secondPayload) {
+        const interTemp = this.webViewTemplate(firstPayload, secondPayload);
 
         return (<WebView
             source={{ html: interTemp, baseUrl: 'web/' }}
@@ -78,56 +90,33 @@ export default class StackSelection extends Component {
 
     }
 
-    render() {
-        return (
-            <React.Fragment>
-                {this.renderWebView()}
-            </React.Fragment>
-        );
-    }
-
-    webViewTemplate() {
-        const { userStore, stackModel, amount } = this.state;
+    webViewTemplate(firstPayload, secondPayload) {
+        let { userStore, amount } = this.state;
 
         let model = {};
         let flutterDisplay = 'none';
         let interswitchDisplay = 'none';
 
-        
-        if (stackModel) {
+        if (firstPayload) {
             model = {
-                amount: stackModel.amount,
-                currency: stackModel.currency,
-                dateOfTransaction: stackModel.dateOfTransaction,
-                orderReference: stackModel.orderReference,
-                transRef: stackModel.transactionReference
+                amount: secondPayload.amount,
+                currency: secondPayload.currency,
+                dateOfTransaction: secondPayload.dateOfTransaction,
+                orderReference: firstPayload.orderReference,
+                transRef: firstPayload.transactionReference
             };
-        }
 
-        if (stackModel.flutterwaveDetails) {
-            model.flutterSubAccountID = stackModel.flutterwaveDetails.subaccount_id;
+            amount = secondPayload.amount;
+            model.flutterSubAccountID = firstPayload.id; // secondPayload.flutterwaveDetails.subaccount_id;
             flutterDisplay = 'block';
-        }
 
-        if (stackModel.interswitchDetails) {
-            interswitchDisplay = 'block';
-            model.gatewayInterswitch = stackModel.interswitchDetails;
-            model.currency = stackModel.interswitchDetails.currency_name;
-            model.merchantCode = stackModel.interswitchDetails.merchant_code;
-            model.item_accounts_id = stackModel.interswitchDetails.item_accounts_id;
-            model.amount = stackModel.amount * 100;
-            model.switch_client_id = stackModel.client_id;
-            model.switch_client_secret = stackModel.client_secret;
         }
-
 
         if (userStore) {
             model.email = userStore.email,
             model.fullName = userStore.fullName,
             model.phoneNumber = '' // TODO:*
         }
-
-        console.log('@@@@@@@@@', model);
 
         const html = `<!DOCTYPE html>
     <html lang="en">
@@ -379,7 +368,7 @@ export default class StackSelection extends Component {
 
                                         <div class="row">
                                             <div class="column" style="display: ${flutterDisplay}">
-                                                <a href="http://hr.goldenmemoria.com/paystack-flutter.html?email=${model.email}&amount=${stackModel.amount}&phone=${model.phoneNumber}&flutterId=${model.flutterSubAccountID}&transRef=${model.transRef}" class="form-control-submit-button clickMe">Flutterwave</a>
+                                                <a href="http://hr.goldenmemoria.com/paystack-flutter.html?email=${model.email}&amount=${secondPayload.amount}&phone=${model.phoneNumber}&flutterId=${model.flutterSubAccountID}&transRef=${model.transRef}" class="form-control-submit-button clickMe">Flutterwave</a>
                                             </div>
 
                                             <div class="column" style="display: ${interswitchDisplay}">

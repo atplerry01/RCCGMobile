@@ -10,12 +10,8 @@ class TabNav extends Component {
         };
     }
 
-    componentDidMount() {
-        console.log('info from NavTab')
-    }
-
     render() {
-        const { cartValue } =  this.props;
+        const { cartValue, navigation } =  this.props;
 
         return (
             <Footer style={Style.greyTopLine}>

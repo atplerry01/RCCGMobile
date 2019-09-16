@@ -66,8 +66,20 @@ export default class ParishSelectorScreen extends Component {
             const userData = JSON.parse(userToken);
             this.setState({ userData });
             this.getParishes(userData);
+            this.getCartItemNumber();
         }
     }
+
+    
+    async getCartItemNumber() {
+        const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
+        if (productCartItemsStore && productCartItemsStore !== 'none') {
+            const productCartItems2 = JSON.parse(productCartItemsStore);
+            const productCartItems = JSON.parse(productCartItems2);
+            this.setState({ productCartItemNumber: productCartItems.length });
+        }
+    }
+
 
     searchClick() {
         const { search, parishes } = this.state;
@@ -133,7 +145,7 @@ export default class ParishSelectorScreen extends Component {
 
 
     render() {
-        const { parishes, filteredList, search, errors = {} } = this.state;
+        const { parishes, filteredList, search, errors = {}, productCartItemNumber } = this.state;
 
         return (
 
@@ -241,8 +253,11 @@ export default class ParishSelectorScreen extends Component {
 
                 </Content>
 
-                <TabNav navigation={this.props.navigation} />
-
+  
+                <TabNav navigation={this.props.navigation}
+                    cartValue={productCartItemNumber? productCartItemNumber : 0} 
+                    gotoCart={() => this.props.navigation.navigate('ProductCartReview')} 
+                />
             </Container>
         );
     }

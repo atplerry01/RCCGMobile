@@ -169,6 +169,18 @@ export default class OnlinePay extends Component {
             }
         }
 
+        this.getCartItemNumber();
+
+    }
+
+
+    async getCartItemNumber() {
+        const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
+        if (productCartItemsStore && productCartItemsStore !== 'none') {
+            const productCartItems2 = JSON.parse(productCartItemsStore);
+            const productCartItems = JSON.parse(productCartItems2);
+            this.setState({ productCartItemNumber: productCartItems.length });
+        }
     }
 
 
@@ -302,8 +314,11 @@ export default class OnlinePay extends Component {
 
                 </Content>
 
-                <TabNav navigation={this.props.navigation} />
-
+  
+                <TabNav navigation={this.props.navigation}
+                    cartValue={productCartItemNumber? productCartItemNumber : 0} 
+                    gotoCart={() => this.props.navigation.navigate('ProductCartReview')} 
+                />
             </Container>
 
         );

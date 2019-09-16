@@ -58,38 +58,6 @@ export default class Product extends PureComponent {
 
     }
 
-    async onHandleCartPress(obj) {
-        this.setState({ favorite: !obj.favorite });
-        const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
-
-        if (obj.favorite) {            
-            if (productCartItemsStore && productCartItemsStore !== 'none') {
-                const productCartItems2 = JSON.parse(productCartItemsStore);
-                const productCartItems = JSON.parse(productCartItems2);
-
-                newItemList = productCartItems.filter(function (objX) {
-                    return objX.productId !== obj.id;
-                });
-
-                this.saveStorageItem('@productCartItemsStore', JSON.stringify(newItemList));
-            }
-        } else {
-            // it false, add it             
-            if (productCartItemsStore && productCartItemsStore !== 'none') {
-                const productCartItems2 = JSON.parse(productCartItemsStore);
-                const productCartItems = JSON.parse(productCartItems2);
-
-                productCartItems.push({ favorite: true, productId: obj.id });
-                this.saveStorageItem('@productCartItemsStore', JSON.stringify(productCartItems));
-            } else {
-                const productCartItems = [];
-                productCartItems.push({ favorite: true, productId: obj.id });
-                this.saveStorageItem('@productCartItemsStore', JSON.stringify(productCartItems));
-            }
-        }
-
-        this.props.onAddOrRemoveItemCart(obj.favorite);
-    }
    
 
     render() {
@@ -117,15 +85,21 @@ export default class Product extends PureComponent {
                         </View>
                     </View>
                     <View style={Styles.trash}>
-                        <Button transparent onPress={
-                            this.onHandleCartPress.bind(this, {id, favorite})
-                        }>
+                        <Button transparent onPress={async () => {
+                            this.props.addOrRemoveItemCart
+                            this.setState({ favorite: !favorite }); 
+                            // await this.processLS(id)
+                        }}>
                             <Icon
                                 name={favorite ? 'shopping-cart' : 'cart-plus'}
                                 color={favorite ? '#F44336' : 'rgb(50, 50, 50)'}
                                 size={30}
                                 style={{ marginBottom: 10, marginTop: 20 }}
-                                // onPress={() => {console.log('ok')}}
+                                onPress={() => { 
+                                    this.setState({ favorite: !favorite }); 
+                                    this.props.addOrRemoveItemCart
+                                    // this.processLS(id) 
+                                }}
                             />
                         </Button>
                     </View>

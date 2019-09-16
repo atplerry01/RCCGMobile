@@ -32,10 +32,23 @@ export default class MyProfileScreen extends Component {
                 // TODO:
             }
         }
+
+        this.getCartItemNumber();
     }
 
+    
+    async getCartItemNumber() {
+        const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
+        if (productCartItemsStore && productCartItemsStore !== 'none') {
+            const productCartItems2 = JSON.parse(productCartItemsStore);
+            const productCartItems = JSON.parse(productCartItems2);
+            this.setState({ productCartItemNumber: productCartItems.length });
+        }
+    }
+
+
     render() {
-        let { userProfile } = this.state;
+        let { userProfile, productCartItemNumber } = this.state;
 
         return <Container style={Style.bgMain}>
             <StatusBar backgroundColor="#7E8BF5" animated barStyle="light-content" />
@@ -127,8 +140,11 @@ export default class MyProfileScreen extends Component {
 
             </Content>
 
-            <TabNav navigation={this.props.navigation} />
-
+  
+            <TabNav navigation={this.props.navigation}
+                    cartValue={productCartItemNumber? productCartItemNumber : 0} 
+                    gotoCart={() => this.props.navigation.navigate('ProductCartReview')} 
+                />
         </Container>
     }
 

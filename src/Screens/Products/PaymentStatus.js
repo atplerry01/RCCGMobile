@@ -6,7 +6,7 @@ import Style from '@Theme/Style';
 import axios from 'axios';
 import { Button, Container, Content, Icon, Right, Text, View } from 'native-base';
 import React, { Component } from 'react';
-import { AsyncStorage, FlatList, Image, ImageBackground, TouchableHighlight } from 'react-native';
+import { AsyncStorage, FlatList, Image, ImageBackground, ToastAndroid, TouchableHighlight } from 'react-native';
 import { config } from '../../helpers';
 
 export default class PaymentStatus extends Component {
@@ -45,6 +45,17 @@ export default class PaymentStatus extends Component {
             
             this.getPaymentConfirmation(userStore, stackModel, gatewayStr);
         }
+
+        this.getCartItemNumber();
+    }
+
+    async getCartItemNumber() {
+        const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
+        if (productCartItemsStore && productCartItemsStore !== 'none') {
+            const productCartItems2 = JSON.parse(productCartItemsStore);
+            const productCartItems = JSON.parse(productCartItems2);
+            this.setState({ productCartItemNumber: productCartItems.length });
+        }
     }
 
     renderContent() {
@@ -54,7 +65,7 @@ export default class PaymentStatus extends Component {
 
     render() {
 
-        const { paymentTicket } = this.state;
+        const { paymentTicket, productCartItemNumber } = this.state;
 
         return (<Container style={Style.bgMain}>
 
@@ -115,8 +126,11 @@ export default class PaymentStatus extends Component {
 
             </Content>
 
-            <TabNav navigation={this.props.navigation} />
-
+  
+            <TabNav navigation={this.props.navigation}
+                    cartValue={productCartItemNumber? productCartItemNumber : 0} 
+                    gotoCart={() => this.props.navigation.navigate('ProductCartReview')} 
+                />
         </Container>
         );
     }

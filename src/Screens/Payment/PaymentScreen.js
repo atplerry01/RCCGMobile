@@ -8,7 +8,24 @@ import React, { Component } from 'react';
 import { FlatList, Image, ImageBackground, TouchableHighlight, TouchableOpacity } from 'react-native';
 
 export default class PaymentScreen extends Component {
+
+    async componentDidMount() {
+        const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
+       this.getCartItemNumber(productCartItemsStore);
+    }
+
+    async getCartItemNumber() {
+        const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
+        if (productCartItemsStore && productCartItemsStore !== 'none') {
+            const productCartItems2 = JSON.parse(productCartItemsStore);
+            const productCartItems = JSON.parse(productCartItems2);
+            this.setState({ productCartItemNumber: productCartItems.length });
+        }
+    }
+
     render() {
+        const { productCartItemNumber} = this.state;
+
         return (<Container style={Style.bgMain}>
 
             <Content style={Style.layoutInner} contentContainerStyle={Style.layoutContent}>
@@ -98,8 +115,11 @@ export default class PaymentScreen extends Component {
 
             </Content>
 
-            <TabNav navigation={this.props.navigation} />
-
+  
+            <TabNav navigation={this.props.navigation}
+                    cartValue={productCartItemNumber? productCartItemNumber : 0} 
+                    gotoCart={() => this.props.navigation.navigate('ProductCartReview')} 
+                />
 
         </Container>
         );

@@ -4,7 +4,7 @@ import Style from '@Theme/Style';
 import axios from 'axios';
 import { Container, Content, Text } from 'native-base';
 import React from 'react';
-import { FlatList, Image, ImageBackground, TouchableHighlight, View } from 'react-native';
+import { AsyncStorage, FlatList, Image, ImageBackground, TouchableHighlight, View } from 'react-native';
 import { config } from '../../helpers';
 
 export default class EventScreen extends React.Component {
@@ -20,11 +20,23 @@ export default class EventScreen extends React.Component {
 
   componentDidMount() {
     this.getEvents();
+    this.getCartItemNumber();
   }
 
+
+  async getCartItemNumber() {
+    const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
+    if (productCartItemsStore && productCartItemsStore !== 'none') {
+      const productCartItems2 = JSON.parse(productCartItemsStore);
+      const productCartItems = JSON.parse(productCartItems2);
+      this.setState({ productCartItemNumber: productCartItems.length });
+    }
+  }
+
+
   render() {
-    const { events } = this.state;
-        
+    const { events, productCartItemNumber } = this.state;
+
     return <Container style={Style.bgMain}>
 
       <Content style={Style.layoutInner} contentContainerStyle={Style.layoutContent}>
@@ -36,8 +48,8 @@ export default class EventScreen extends React.Component {
               data={events}
               style={Styles.item}
               renderItem={({ item, separators }) => (
-                <TouchableHighlight underlayColor='transparent' 
-                  onPress={() => { this.props.navigation.navigate('EventDetail', {itemId: item.id}) }}>
+                <TouchableHighlight underlayColor='transparent'
+                  onPress={() => { this.props.navigation.navigate('EventDetail', { itemId: item.id }) }}>
                   <View style={Styles.record}>
                     <Image source={{ uri: item.imageThumbPath }} style={Styles.itemImg} />
                     <View style={Styles.itemInfo}>
@@ -54,7 +66,10 @@ export default class EventScreen extends React.Component {
 
       </Content>
 
-      <TabNav navigation={this.props.navigation} />
+      <TabNav navigation={this.props.navigation}
+        cartValue={productCartItemNumber ? productCartItemNumber : 0}
+        gotoCart={() => this.props.navigation.navigate('ProductCartReview')}
+      />
 
     </Container>
   }
@@ -70,6 +85,17 @@ export default class EventScreen extends React.Component {
     }).catch(err => {
       this.setState({ eventsFound: false });
     })
+  }
+
+  getStorageItem = async (key) => {
+    let result = '';
+    try {
+      result = await AsyncStorage.getItem(key) || 'none';
+    } catch (error) {
+      ToastAndroid.showWithGravityAndOffset(error.message, ToastAndroid.LONG, ToastAndroid.BOTTOM, 25, 50);
+    }
+
+    return result;
   }
 
 }

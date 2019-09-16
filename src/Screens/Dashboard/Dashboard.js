@@ -75,6 +75,7 @@ export default class Dashboard extends Component {
         this.checkInternt();
         const userToken = await this.getStorageItem('@userToken');
         const parishCodeStore = await this.getStorageItem('@parishCodeStore');
+        const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
 
         // New Account and No Parish
         if (parishCodeStore && parishCodeStore !== 'none') {
@@ -87,31 +88,33 @@ export default class Dashboard extends Component {
         if (userToken && userToken !== 'none') {
             const userData = JSON.parse(userToken);
             this.getLatestParishes(userData);
+            
         } else {
             this.props.navigation.navigate('Auth');
         }
 
+        this.getCartItemNumber();
     }
+    
+   
+    async getCartItemNumber() {
+        const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
+        if (productCartItemsStore && productCartItemsStore !== 'none') {
+            const productCartItems2 = JSON.parse(productCartItemsStore);
+            const productCartItems = JSON.parse(productCartItems2);
+            this.setState({ productCartItemNumber: productCartItems.length });
+        }
+    }
+
 
     searchClick() {
         const { search } = this.state;
         this.props.navigation.navigate('ParishSearch', { 'parishItem': search });
     }
 
-    increaseCart() {
-        this.setState(prevState => {
-            return { cartNo: prevState.cartNo + 1 }
-        })
-        // this.setState({ cartNo: cartNo + 1});
-    }
-
     
-    gotoCart = (item, index) => {
-        this.props.navigation.navigate('ProductCartReview');
-    }
-
     render() {
-        const { latestParishes, cartNo } = this.state;
+        const { latestParishes, productCartItemNumber } = this.state;
 
         return (
             <Container>
@@ -242,13 +245,16 @@ export default class Dashboard extends Component {
 
                 </Content>
 
-                <TabNav cartValue={cartNo} 
+                <TabNav 
                     navigation={this.props.navigation}
-                    gotoCart={() => this.gotoCart()} />
+                    cartValue={productCartItemNumber? productCartItemNumber : 0} 
+                    gotoCart={() => this.props.navigation.navigate('ProductCartReview')} 
+                />
 
             </Container>
         );
     }
+
 
     getLatestParishes(userStore) {
         var data = `userID=${userStore.userID}&pageNum=1&pageSize=5`;

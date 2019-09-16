@@ -8,7 +8,6 @@ import React from 'react';
 import { AsyncStorage, FlatList, ImageBackground, Text, ToastAndroid, View } from 'react-native';
 import ProductCartRev from '../../Component/Resource/ProductCartRev';
 import { config } from '../../helpers';
-import { ProductCartItems, ProductLists } from './_product-data';
 
 export default class ProductCartReview extends React.Component {
 
@@ -21,55 +20,6 @@ export default class ProductCartReview extends React.Component {
         parishesFound: false
     }
 
-    async componentDidMount() {
-        const userToken = await this.getStorageItem('@userToken');
-        const parishCodeStore = await this.getStorageItem('@parishCodeStore');
-
-        if (userToken && userToken !== 'none' && parishCodeStore && parishCodeStore !== 'none') {
-            const userData = JSON.parse(userToken);
-            const parishCode = JSON.parse(parishCodeStore);
-
-            this.setState({ parishCode });
-            this.getParisheProducts(userData, parishCode);
-        }
-
-        // Get ParishCode
-
-        const finalResult = [];
-
-        if (ProductLists && ProductLists.length) {
-
-            ProductCartItems.map(c => {
-                var entIndx = ProductCartItems.indexOf(c);
-                ProductCartItems[entIndx].selQuantity = 1;
-
-                const indx = ProductLists.findIndex(p => p.id === c.productId);
-
-                if (indx !== -1) {
-                    const mergeData = { ...c, ...ProductLists[indx] };
-                    finalResult.push(mergeData);
-                }
-
-            });
-
-            console.log('############## ', finalResult);
-            // ProductLists.map(p => {
-            //     // Add default selQuantity
-            //     var entIndx = ProductLists.indexOf(p);
-            //     ProductLists[entIndx].selQuantity = 1;
-
-            //     const indx = ProductCartItems.findIndex(c => c.productId === p.id);
-            //     if (indx !== -1) {
-            //         const mergeData = { ...p, ...ProductCartItems[indx] };
-            //         finalResult.push(mergeData);
-            //     }
-            // })
-
-            // const productItemLists = [...ProductLists, ...finalResult];
-            // console.log('productItemLists', productItemLists);
-            this.setState({ productItemLists: finalResult });
-        }
-    }
 
     onSubtract = (item, index) => {
         const products = [...this.state.productItemLists];
@@ -85,28 +35,58 @@ export default class ProductCartReview extends React.Component {
         this.setState({ productItemLists: products });
     }
 
-    onRemove = (item, index) => {
+    onRemove = async (item, index) => {
         const { productItemLists } = this.state;
 
         newItemList = productItemLists.filter(function (obj) {
             return obj.id !== item.id;
         });
 
-        this.setState({ productItemLists: newItemList });
+        // Update LS Cart
+        let finalResult2 = [];
+        newItemList.map(p => { finalResult2.push({ favorite: true, productId: p.id }) });
+
+        this.saveStorageItem('@productCartItemsStore', JSON.stringify(finalResult2));
+        this.setState({ productCartItemNumber: finalResult2.length, productItemLists: newItemList });
     }
+
+    async componentDidMount() {
+        const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
+
+        if (productCartItemsStore && productCartItemsStore !== 'none') {
+            const productCartItems2 = JSON.parse(productCartItemsStore);
+            const productCartItems = JSON.parse(productCartItems2);
+            this.setState({ productCartItems });
+        }
+
+        // Get ParishCode
+        this.getParisheProducts();
+
+        this.getCartItemNumber();
+
+    }
+
+    async getCartItemNumber() {
+        const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
+        if (productCartItemsStore && productCartItemsStore !== 'none') {
+            const productCartItems2 = JSON.parse(productCartItemsStore);
+            const productCartItems = JSON.parse(productCartItems2);
+            this.setState({ productCartItemNumber: productCartItems.length });
+        }
+    }
+
 
     gotoProductDetails = (item, index) => {
         this.props.navigation.navigate('ProductDetail', { item: JSON.stringify(item) });
     }
 
     onlinePaymentPlatform() {
-        console.log('ok');
         this.registerPayment();
     }
 
     render() {
 
-        const { productItemLists } = this.state;
+        const { productItemLists, productCartItemNumber } = this.state;
 
         let totalQuantity = 0;
         let totalPrice = 0;
@@ -161,8 +141,11 @@ export default class ProductCartReview extends React.Component {
 
             </Content>
 
-            <TabNav navigation={this.props.navigation} />
 
+            <TabNav navigation={this.props.navigation}
+                cartValue={productCartItemNumber ? productCartItemNumber : 0}
+                gotoCart={() => this.props.navigation.navigate('ProductCartReview')}
+            />
         </Container>
     }
 
@@ -171,7 +154,7 @@ export default class ProductCartReview extends React.Component {
         // const pcode = parishCode.replace(/"/g, "");
         // var data = `userID=${userStore.userID}&currency=NGN&amount=${amount}&parishCode=${pcode}&itemID=${itemId}&channel=app`;
         var data = "code=01&itemCodes=222346521700000_s01,222346521600000_s01&currency=NGN&amount=220000&channel=web&email=chuka%40hotmail.com&quantities=1%2C1&type=1&address1=&address2=&region=&postal_code=&city=&country=&delivery_notes=&deliever_time=&delivery_date=";
-        
+
         return axios
             .post(config.apiBaseUrl + "/transaction/add", data, {
                 headers: {
@@ -179,33 +162,47 @@ export default class ProductCartReview extends React.Component {
                 }
             })
             .then(resp => {
-                console.log('From StackReview', resp.data.message.data);
-                this.props.navigation.navigate('StackSelection', { paydetail: JSON.stringify(resp.data.message.data) })
+                const stackValue = resp.data.data.data;
+                this.props.navigation.navigate('StackSelection', { paydetail: JSON.stringify(resp.data.data.data) })
             })
             .catch(error => {
-                console.log(error.message);
                 ToastAndroid.show('Register Payment: ' + error.message, ToastAndroid.SHORT);
             });
     }
 
-    getParisheProducts = (userStore, parishCode) => {
-        const pcode = parishCode.replace(/"/g, "");
-        var data = `userID=${userStore.userID}&parishCode=01&pageNum=1&pageSize=20&currency=NGN`;
+
+    getParisheProducts() {
+        const { productCartItems } = this.state;
 
         return axios
-            .post(config.apiBaseUrl + "/product/getAllProducts", data, {
-                headers: {
-                    "Authorization": `Bearer ${userStore.access_token}`,
-                    "Content-Type": "application/x-www-form-urlencoded"
-                }
-            })
+            .get(config.apiBaseUrl + `/product/allProducts?code=01&pageNum=1&pageSize=10&currency=NGN`)
             .then(resp => {
-                this.setState({ parishProducts: resp.data.data, parishProductFound: true });
+
+                const productEntity = resp.data.data;
+                let finalResult = [];
+
+                productCartItems.map(c => {
+                    var entIndx = productCartItems.indexOf(c);
+                    productCartItems[entIndx].selQuantity = 1;
+
+                    const indx = productEntity.findIndex(p => p.id === c.productId);
+
+                    if (indx !== -1) {
+                        const mergeData = { ...c, ...productEntity[indx] };
+                        finalResult.push(mergeData);
+                    }
+
+                });
+
+                this.setState({ productItemLists: finalResult })
+
             })
             .catch(error => {
-                ToastAndroid.show(`An Error Occur - ${error.message}`, ToastAndroid.SHORT);
+                ToastAndroid.show(error.message, ToastAndroid.SHORT);
             });
     }
+
+
 
     saveStorageItem = async (key, value) => {
         try {

@@ -24,8 +24,17 @@ export default class PrayerRoomDetail extends Component {
 
     componentDidMount() {
         this.getPrayerRoomDetail();
+        this.getCartItemNumber();
     }
 
+    async getCartItemNumber() {
+        const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
+        if (productCartItemsStore && productCartItemsStore !== 'none') {
+            const productCartItems2 = JSON.parse(productCartItemsStore);
+            const productCartItems = JSON.parse(productCartItems2);
+            this.setState({ productCartItemNumber: productCartItems.length });
+        }
+    }
 
     render() {
         const { prayerroomDetail } = this.state;
@@ -160,8 +169,13 @@ export default class PrayerRoomDetail extends Component {
 
                 </Content>
 
-                <TabNav navigation={this.props.navigation} />
-            </Container>
+  
+                <TabNav navigation={this.props.navigation}
+                    cartValue={productCartItemNumber? productCartItemNumber : 0} 
+                    gotoCart={() => this.props.navigation.navigate('ProductCartReview')} 
+                />            
+                
+                </Container>
         );
     }
 
@@ -178,5 +192,15 @@ export default class PrayerRoomDetail extends Component {
         })
     }
 
+    getStorageItem = async (key) => {
+        let result = '';
+        try {
+            result = await AsyncStorage.getItem(key) || 'none';
+        } catch (error) {
+            ToastAndroid.showWithGravityAndOffset(error.message, ToastAndroid.LONG, ToastAndroid.BOTTOM, 25, 50);
+        }
+
+        return result;
+    }
 
 }

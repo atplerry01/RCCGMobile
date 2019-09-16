@@ -4,7 +4,7 @@ import Style from '@Theme/Style';
 import axios from 'axios';
 import { Container, Content, Icon, List, ListItem, Tab, Tabs, Text, View } from 'native-base';
 import React, { Component } from 'react';
-import { Image, ImageBackground, StatusBar } from 'react-native';
+import { AsyncStorage, Image, ImageBackground, StatusBar } from 'react-native';
 import { config } from '../../helpers';
 
 export default class GOProfile extends Component {
@@ -16,10 +16,21 @@ export default class GOProfile extends Component {
 
     componentDidMount() {
         this.getGOProfileDetail();
+        this.getCartItemNumber();
+    }
+    
+    async getCartItemNumber() {
+        const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
+        if (productCartItemsStore && productCartItemsStore !== 'none') {
+            const productCartItems2 = JSON.parse(productCartItemsStore);
+            const productCartItems = JSON.parse(productCartItems2);
+            this.setState({ productCartItemNumber: productCartItems.length });
+        }
     }
 
+
     renderContent = () => {
-        const { profileDetail } = this.state;
+        const { profileDetail, productCartItemNumber } = this.state;
 
         if (this.state.profileDetail) {
             return (
@@ -105,8 +116,11 @@ export default class GOProfile extends Component {
                 {this.renderContent()}
             </Content>
 
-            <TabNav navigation={this.props.navigation} />
-
+  
+            <TabNav navigation={this.props.navigation}
+                    cartValue={productCartItemNumber? productCartItemNumber : 0} 
+                    gotoCart={() => this.props.navigation.navigate('ProductCartReview')} 
+                />
         </Container>
     }
 
@@ -121,5 +135,17 @@ export default class GOProfile extends Component {
         }).catch(err => {
             this.setState({ profileDetailFound: false });
         })
+    }
+
+    
+    getStorageItem = async (key) => {
+        let result = '';
+        try {
+            result = await AsyncStorage.getItem(key) || 'none';
+        } catch (error) {
+            ToastAndroid.showWithGravityAndOffset(error.message, ToastAndroid.LONG, ToastAndroid.BOTTOM, 25, 50);
+        }
+
+        return result;
     }
 }

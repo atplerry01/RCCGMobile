@@ -29,7 +29,6 @@ export default class ProductCartRev extends PureComponent {
     }
 
     toggleCartInput = (entity, favorite) => {
-        console.log(entity);
         this.setState({ favorite: !favorite });
     }
 

@@ -35,11 +35,20 @@ export default class ParishProduct extends React.Component {
         }
 
         // Get ParishCode
+        this.getCartItemNumber();
+    }
 
+    async getCartItemNumber() {
+        const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
+        if (productCartItemsStore && productCartItemsStore !== 'none') {
+            const productCartItems2 = JSON.parse(productCartItemsStore);
+            const productCartItems = JSON.parse(productCartItems2);
+            this.setState({ productCartItemNumber: productCartItems.length });
+        }
     }
 
     render() {
-        const { parishProducts, parishCode } = this.state;
+        const { parishProducts, parishCode, productCartItemNumber } = this.state;
 
         return <Container style={Style.bgMain}>
             <Content style={Style.layoutInner} contentContainerStyle={Style.layoutContent}>
@@ -83,8 +92,11 @@ export default class ParishProduct extends React.Component {
 
             </Content>
 
-            <TabNav navigation={this.props.navigation} />
-
+  
+            <TabNav navigation={this.props.navigation}
+                    cartValue={productCartItemNumber? productCartItemNumber : 0} 
+                    gotoCart={() => this.props.navigation.navigate('ProductCartReview')} 
+                />
         </Container>
     }
 

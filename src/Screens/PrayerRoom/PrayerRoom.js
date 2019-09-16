@@ -6,7 +6,7 @@ import Style from '@Theme/Style';
 import axios from 'axios';
 import { Container, Content, Icon } from 'native-base';
 import React from 'react';
-import { Dimensions, FlatList, Image, Text, TouchableOpacity, View } from 'react-native';
+import { AsyncStorage, Dimensions, FlatList, Image, Text, TouchableOpacity, View } from 'react-native';
 import { config } from '../../helpers';
 
 //const {width, height} = Dimensions.get('window')
@@ -26,10 +26,20 @@ export default class PrayerRoomScreen extends React.Component {
 
   componentDidMount() {
     this.getPrayerRooms();
+    this.getCartItemNumber();
+  }
+
+  async getCartItemNumber() {
+    const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
+    if (productCartItemsStore && productCartItemsStore !== 'none') {
+      const productCartItems2 = JSON.parse(productCartItemsStore);
+      const productCartItems = JSON.parse(productCartItems2);
+      this.setState({ productCartItemNumber: productCartItems.length });
+    }
   }
 
   render() {
-    const { prayerrooms } = this.state;
+    const { prayerrooms, productCartItemNumber } = this.state;
 
     return <Container style={Style.bgMain}>
 
@@ -64,8 +74,11 @@ export default class PrayerRoomScreen extends React.Component {
 
       </Content>
 
-      <TabNav navigation={this.props.navigation} />
 
+      <TabNav navigation={this.props.navigation}
+        cartValue={productCartItemNumber ? productCartItemNumber : 0}
+        gotoCart={() => this.props.navigation.navigate('ProductCartReview')}
+      />
     </Container>
   }
 
@@ -80,5 +93,17 @@ export default class PrayerRoomScreen extends React.Component {
       this.setState({ prayerroomsFound: false });
     })
   }
+
+  
+  getStorageItem = async (key) => {
+    let result = '';
+    try {
+        result = await AsyncStorage.getItem(key) || 'none';
+    } catch (error) {
+        ToastAndroid.showWithGravityAndOffset(error.message, ToastAndroid.LONG, ToastAndroid.BOTTOM, 25, 50);
+    }
+
+    return result;
+}
 
 }

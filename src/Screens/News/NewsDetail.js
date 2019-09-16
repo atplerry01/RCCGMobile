@@ -4,7 +4,7 @@ import Style from '@Theme/Style';
 import axios from 'axios';
 import { Container, Content, Icon, Text, View } from 'native-base';
 import React, { Component } from 'react';
-import { ImageBackground, StatusBar } from 'react-native';
+import { AsyncStorage, ImageBackground, StatusBar } from 'react-native';
 import { config } from '../../helpers';
 
 
@@ -26,10 +26,21 @@ export default class NewsDetail extends Component {
         const itemId = navigation.getParam('itemId', 'NO-ID');
 
         this.getNewsDetail(itemId);
+        this.getCartItemNumber();
+    }
+
+
+    async getCartItemNumber() {
+        const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
+        if (productCartItemsStore && productCartItemsStore !== 'none') {
+            const productCartItems2 = JSON.parse(productCartItemsStore);
+            const productCartItems = JSON.parse(productCartItems2);
+            this.setState({ productCartItemNumber: productCartItems.length });
+        }
     }
 
     renderContent() {
-        const { newsDetail } = this.state;
+        const { newsDetail, productCartItemNumber } = this.state;
 
         if (this.state.newsDetail) {
             return (<React.Fragment>
@@ -85,7 +96,11 @@ export default class NewsDetail extends Component {
 
                 </Content>
 
-                <TabNav navigation={this.props.navigation} />
+  
+                <TabNav navigation={this.props.navigation}
+                    cartValue={productCartItemNumber? productCartItemNumber : 0} 
+                    gotoCart={() => this.props.navigation.navigate('ProductCartReview')} 
+                />            
             </Container>
 
         );
@@ -101,6 +116,18 @@ export default class NewsDetail extends Component {
         }).catch(err => {
             this.setState({ newsDetailFound: false });
         })
+    }
+
+    
+    getStorageItem = async (key) => {
+        let result = '';
+        try {
+            result = await AsyncStorage.getItem(key) || 'none';
+        } catch (error) {
+            ToastAndroid.showWithGravityAndOffset(error.message, ToastAndroid.LONG, ToastAndroid.BOTTOM, 25, 50);
+        }
+
+        return result;
     }
 
 }

@@ -15,7 +15,21 @@ import StackSelection from './StackSelection';
 
 const ProductStack = createStackNavigator(
     {
-        Product: {
+        ProductList: {
+            screen: ProductList,
+            navigationOptions: ({ navigation }) => {
+                return {
+                    headerTitle: 'Product Lists',
+                    headerStyle: {
+                        backgroundColor: colors.green01,
+                    },
+                    headerTintColor: '#fff',
+                    headerTitleStyle: {
+                        fontWeight: 'bold',
+                    }
+                }
+            }
+        },Product: {
             screen: ProductScreen,
             navigationOptions: ({ navigation }) => {
                 return {
@@ -38,21 +52,7 @@ const ProductStack = createStackNavigator(
                 }
             }
         },
-        ProductList: {
-            screen: ProductList,
-            navigationOptions: ({ navigation }) => {
-                return {
-                    headerTitle: 'Product Lists',
-                    headerStyle: {
-                        backgroundColor: colors.green01,
-                    },
-                    headerTintColor: '#fff',
-                    headerTitleStyle: {
-                        fontWeight: 'bold',
-                    }
-                }
-            }
-        },
+        
         ProductCartReview: {
             screen: ProductCartReview,
             navigationOptions: ({ navigation }) => {

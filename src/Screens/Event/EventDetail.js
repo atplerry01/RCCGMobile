@@ -5,7 +5,7 @@ import Style from '@Theme/Style';
 import axios from 'axios';
 import { Container, Content, Icon, List, ListItem, Tab, Tabs, Text, View } from 'native-base';
 import React, { Component } from 'react';
-import { FlatList, Image, ImageBackground, StatusBar, TouchableOpacity } from 'react-native';
+import { AsyncStorage, FlatList, Image, ImageBackground, StatusBar, TouchableOpacity } from 'react-native';
 import { config } from '../../helpers';
 
 
@@ -26,7 +26,19 @@ export default class EventDetail extends Component {
         const { navigation } = this.props;
         const itemId = navigation.getParam('itemId', 'NO-ID');
         this.getEventDetail(itemId);
+        this.getCartItemNumber();
     }
+
+    
+    async getCartItemNumber() {
+        const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
+        if (productCartItemsStore && productCartItemsStore !== 'none') {
+            const productCartItems2 = JSON.parse(productCartItemsStore);
+            const productCartItems = JSON.parse(productCartItems2);
+            this.setState({ productCartItemNumber: productCartItems.length });
+        }
+    }
+
 
     renderContent() {
         const { eventDetail } = this.state;
@@ -170,7 +182,7 @@ export default class EventDetail extends Component {
     }
 
     render() {
-
+        const { productCartItemNumber} = this.state;
         return (
             <Container style={Style.bgMain}>
                 <StatusBar backgroundColor="rgba(0,0,0,0)" animated barStyle="dark-content" />
@@ -179,7 +191,11 @@ export default class EventDetail extends Component {
                     {this.renderContent()}
                 </Content>
 
-                <TabNav navigation={this.props.navigation} />
+  
+                <TabNav navigation={this.props.navigation}
+                    cartValue={productCartItemNumber? productCartItemNumber : 0} 
+                    gotoCart={() => this.props.navigation.navigate('ProductCartReview')} 
+                />            
             </Container>
 
         );
@@ -197,4 +213,16 @@ export default class EventDetail extends Component {
         })
     }
 
+    
+    getStorageItem = async (key) => {
+        let result = '';
+        try {
+            result = await AsyncStorage.getItem(key) || 'none';
+        } catch (error) {
+            ToastAndroid.showWithGravityAndOffset(error.message, ToastAndroid.LONG, ToastAndroid.BOTTOM, 25, 50);
+        }
+
+        return result;
+    }
+    
 }

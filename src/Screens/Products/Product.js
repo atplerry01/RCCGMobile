@@ -1,5 +1,6 @@
 import TabNav from '@Component/Common/TabNav';
 import colors from '@Constants/Colors';
+import FavStyles from '@Screen/Member/Favorites/Style';
 import Styles from '@Theme/MemberHome';
 import Style from '@Theme/Style';
 import axios from 'axios';
@@ -29,32 +30,39 @@ export default class ProductScreen extends Component {
 
         const parishCodeStore = await this.getStorageItem('@parishCodeStore');
         if (parishCodeStore && parishCodeStore !== 'none') {
-            console.log(parishCodeStore);
-
             const parishCode = JSON.parse(parishCodeStore);
             this.getParishProductCategory();
             // this.getNationalProductCategory(); //TODO:
         }
 
         this.getParishProductCategory();
+        this.getCartItemNumber();
+    }
+
+    async getCartItemNumber() {
+        const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
+        if (productCartItemsStore && productCartItemsStore !== 'none') {
+            const productCartItems2 = JSON.parse(productCartItemsStore);
+            const productCartItems = JSON.parse(productCartItems2);
+            this.setState({ productCartItemNumber: productCartItems.length });
+        }
     }
 
     renderParishContent() {
         const { parishProductCategory } = this.state;
-
+    
         if (parishProductCategory && parishProductCategory.length > 0) {
             return parishProductCategory.map((entity, key) => {
                 return (
                     <TouchableOpacity style={Styles.btnBox} onPress={() => {
                         this.props.navigation.navigate('ProductType', { itemId: entity.id })
                     }}>
-                        <Image source={{ uri: entity.image_url }} resizeMode={'cover'} style={Styles.btnImg} />
+                        <Image source={{ uri: entity.image_url }} resizeMode={'cover'} style={FavStyles.itemImg} />
                         <Text style={Styles.btnText}>{entity.slug}</Text>
                     </TouchableOpacity>
                 )
             })
         } else {
-            console.log('error');
             <View><Text>No Category Found</Text></View>
         }
 
@@ -82,6 +90,8 @@ export default class ProductScreen extends Component {
     }
 
     render() {
+        const { productCartItemNumber } = this.state;
+        
         return (<Container key={this.state.compKey} style={Style.bgMain}>
 
             <Content style={Style.layoutInner} contentContainerStyle={Style.layoutContent}>
@@ -117,8 +127,11 @@ export default class ProductScreen extends Component {
 
             </Content>
 
-            <TabNav navigation={this.props.navigation} />
-
+  
+            <TabNav navigation={this.props.navigation}
+                    cartValue={productCartItemNumber? productCartItemNumber : 0} 
+                    gotoCart={() => this.props.navigation.navigate('ProductCartReview')} 
+                />
         </Container>
         );
     }

@@ -25,11 +25,21 @@ export default class ParishScreen extends React.Component {
         if (userToken && userToken !== 'none') {
             const userData = JSON.parse(userToken);
             this.getParishes(userData);
+            this.getCartItemNumber();
         }        
     }
 
+    async getCartItemNumber() {
+        const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
+        if (productCartItemsStore && productCartItemsStore !== 'none') {
+            const productCartItems2 = JSON.parse(productCartItemsStore);
+            const productCartItems = JSON.parse(productCartItems2);
+            this.setState({ productCartItemNumber: productCartItems.length });
+        }
+    }
+
     render() {
-        const { parishes } = this.state;
+        const { parishes, productCartItemNumber } = this.state;
         
         return <Container style={Style.bgMain}>
             <Content style={Style.layoutInner} contentContainerStyle={Style.layoutContent}>
@@ -72,8 +82,11 @@ export default class ParishScreen extends React.Component {
 
             </Content>
 
-            <TabNav navigation={this.props.navigation} />
-
+  
+            <TabNav navigation={this.props.navigation}
+                    cartValue={productCartItemNumber? productCartItemNumber : 0} 
+                    gotoCart={() => this.props.navigation.navigate('ProductCartReview')} 
+                />
         </Container>
     }
 

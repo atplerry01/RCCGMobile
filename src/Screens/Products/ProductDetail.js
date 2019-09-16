@@ -62,6 +62,15 @@ export default class ProductDetail extends Component {
         this[name] = ref;
     }
 
+    async getCartItemNumber() {
+        const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
+        if (productCartItemsStore && productCartItemsStore !== 'none') {
+            const productCartItems2 = JSON.parse(productCartItemsStore);
+            const productCartItems = JSON.parse(productCartItems2);
+            this.setState({ productCartItemNumber: productCartItems.length });
+        }
+    }
+
     componentDidMount = async () => {
         const userToken = await this.getStorageItem('@userToken');
         const { navigation } = this.props;
@@ -85,6 +94,7 @@ export default class ProductDetail extends Component {
             this.setState({ itemDetails: item });
         }
 
+        this.getCartItemNumber();
     }
 
 
@@ -210,6 +220,8 @@ export default class ProductDetail extends Component {
 
     render() {
 
+        const { productCartItemNumber } = this.state;
+
         return (
             <Container style={Style.bgMain}>
                 <StatusBar backgroundColor="rgba(0,0,0,0)" animated barStyle="dark-content" />
@@ -219,7 +231,10 @@ export default class ProductDetail extends Component {
                     {this.renderContent()}
                 </Content>
 
-                <TabNav navigation={this.props.navigation} />
+                <TabNav navigation={this.props.navigation}
+                    cartValue={productCartItemNumber? productCartItemNumber : 0} 
+                    gotoCart={() => this.props.navigation.navigate('ProductCartReview')} 
+                />                
             </Container>
 
         );

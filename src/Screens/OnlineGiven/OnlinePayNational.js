@@ -92,8 +92,19 @@ export default class OnlinePayNational extends Component {
             this.setState({ userToken: JSON.parse(userToken) });
         }
 
-        this.getParishItems(variable.nationalParishCode, userStore);      
+        this.getParishItems(variable.nationalParishCode, userStore);   
+        this.getCartItemNumber();   
     }
+
+    
+    async getCartItemNumber() {
+        const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
+        if (productCartItemsStore && productCartItemsStore !== 'none') {
+            const productCartItems = JSON.parse(productCartItemsStore);
+            this.setState({ productCartItemNumber: productCartItems.length });
+        }
+    }
+
 
     render() {
         let { errors = {}, parish, currencyCode, amount, parishItem, parishItems } = this.state;
@@ -176,8 +187,11 @@ export default class OnlinePayNational extends Component {
 
                 </Content>
 
-                <TabNav navigation={this.props.navigation} />
-
+  
+                <TabNav navigation={this.props.navigation}
+                    cartValue={productCartItemNumber? productCartItemNumber : 0} 
+                    gotoCart={() => this.props.navigation.navigate('ProductCartReview')} 
+                />
             </Container>
 
         );

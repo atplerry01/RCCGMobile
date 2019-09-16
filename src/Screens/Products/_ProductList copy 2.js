@@ -16,23 +16,26 @@ export default class ProductList extends React.Component {
 
     }
 
+
+
+
     state = {
         parishes: {},
         parishesFound: false,
         refresh: false
     }
 
-    async getCartItemNumber() {
-        const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
-        if (productCartItemsStore && productCartItemsStore !== 'none') {
-            const productCartItems2 = JSON.parse(productCartItemsStore);
-            const productCartItems = JSON.parse(productCartItems2);
-            this.setState({ productCartItemNumber: productCartItems.length });
-        }
-    }
-
     async componentDidMount() {
+        // this.saveStorageItem('@productCartItemsStore', JSON.stringify([])); // TODO:
+
+        const userToken = await this.getStorageItem('@userToken');
+        const parishCodeStore = await this.getStorageItem('@parishCodeStore');
         const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
+
+        if (userToken && userToken !== 'none' && parishCodeStore && parishCodeStore !== 'none') {
+            const parishCode = JSON.parse(parishCodeStore);
+            this.setState({ parishCode });
+        }
 
         if (productCartItemsStore && productCartItemsStore !== 'none') {
             const productCartItems2 = JSON.parse(productCartItemsStore);
@@ -41,26 +44,85 @@ export default class ProductList extends React.Component {
         }
 
         this.getParisheProducts();
-        this.getCartItemNumber();
+        // this.getCartItemNumber();
+    }
+
+    async getCartItemNumber() {
+        const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
+        if (productCartItemsStore && productCartItemsStore !== 'none') {
+            const productCartItems = JSON.parse(productCartItemsStore);
+            this.setState({ productCartItemNumber: productCartItems.length });
+        }
     }
 
     onAddOrRemoveItemCart(entity, index) {
-        this.getCartItemNumber();
+
+        // const { productItemLists, productCartItems, refresh } = this.state;
+        console.log(entity);
+
+        // let finalResult = productCartItems; // TODO:
+
+        // if (entity && !entity.favorite) {
+        //     // // TODO:
+        //     finalResult.push({ favorite: true, productId: entity.id });
+
+        //     var pIndx = productItemLists.indexOf(entity);
+        //     productItemLists[pIndx].favorite = true;
+
+        //     this.setState({ productCartItems: finalResult, productItemLists });
+        //     this.setState({ refresh: !refresh })
+        //     this.saveStorageItem('@productCartItemsStore', JSON.stringify(finalResult));
+
+        // } else {
+        //     // newItemList = productCartItems.filter(function (obj) {
+        //     //     return obj.productId !== item.id;
+        //     // });
+
+        //     // // TODO:  // update the productLists
+        //     // var entIndx = productItemLists.indexOf(entity);
+        //     // productEntity[entIndx].favorite = false;
+
+        //     // this.setState({ productCartItems: newItemList });
+        //     // this.saveStorageItem('@productCartItemsStore', JSON.stringify(newItemList));
+        // }
+
+
+
+
+        // // add to the carts
+        // // this.saveStorageItem('@parishCodeStore', JSON.stringify(resp.data.data.user.division.code));
+        // // update the product index item
+
+        // if (ProductLists && ProductLists.length) {
+        //     ProductCartItems.map(c => {
+        //         const indx = ProductList.findIndex(p => p.id === c.productId);
+        //         if (indx !== -1) {
+        //             const mergeData = { ...c, ...ProductLists[indx] };
+        //             finalResult.push(mergeData);
+        //         }
+        //     })
+        // }
+
+        // get the cartItems from LS
+        // Add the selected from the LS
+        // On Deselection, remove from the LS
     }
 
     render() {
 
         const { productItemLists, productCartItemNumber } = this.state;
+        console.log(productItemLists);
 
         return <Container style={Style.bgMain}>
             <Content style={Style.layoutInner} contentContainerStyle={Style.layoutContent}>
+
                 <ImageBackground source={require('@Asset/images/property-bg.png')} style={Styles.homeBg}>
                     <View style={FavStyles.section}>
                         <FlatList
                             data={productItemLists}
                             style={FavStyles.item}
-                            // extraData={this.state.refresh}
-                            // refreshing={this.state.refresh}
+                            extraData={this.state.refresh}
+                            refreshing={this.state.refresh}
                             renderItem={({ item, index }) => (
                                 <Product
                                     id={item.id}
@@ -79,7 +141,7 @@ export default class ProductList extends React.Component {
                 </ImageBackground>
             </Content>
 
-            <TabNav navigation={this.props.navigation}
+            <TabNav
                 cartValue={productCartItemNumber ? productCartItemNumber : 0}
                 gotoCart={() => this.props.navigation.navigate('ProductCartReview')}
             />
@@ -118,6 +180,8 @@ export default class ProductList extends React.Component {
                 ToastAndroid.show(error.message, ToastAndroid.SHORT);
             });
     }
+
+
 
     saveStorageItem = async (key, value) => {
         try {

@@ -6,7 +6,7 @@ import Style from '@Theme/Style';
 import axios from 'axios';
 import { Button, Container, Content, Icon, Right, Text, View } from 'native-base';
 import React, { Component } from 'react';
-import { FlatList, Image, ImageBackground, TouchableHighlight, TouchableOpacity } from 'react-native';
+import { AsyncStorage, FlatList, Image, ImageBackground, TouchableHighlight, TouchableOpacity } from 'react-native';
 import { config } from '../../helpers';
 
 export default class GODeskScreen extends Component {
@@ -26,10 +26,22 @@ export default class GODeskScreen extends Component {
     
     componentDidMount() {
         this.getGOMessages();
+        this.getCartItemNumber();
     }
 
+    
+    async getCartItemNumber() {
+        const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
+        if (productCartItemsStore && productCartItemsStore !== 'none') {
+            const productCartItems2 = JSON.parse(productCartItemsStore);
+            const productCartItems = JSON.parse(productCartItems2);
+            this.setState({ productCartItemNumber: productCartItems.length });
+        }
+    }
+
+
     render() {
-        const {GODeskMessages} = this.state;
+        const {GODeskMessages, productCartItemNumber} = this.state;
         
         return (
             <Container style={Style.bgMain}>
@@ -103,8 +115,11 @@ export default class GODeskScreen extends Component {
 
                 </Content>
 
-                <TabNav navigation={this.props.navigation} />
-
+  
+                <TabNav navigation={this.props.navigation}
+                    cartValue={productCartItemNumber? productCartItemNumber : 0} 
+                    gotoCart={() => this.props.navigation.navigate('ProductCartReview')} 
+                />
             </Container>
         );
     }
@@ -118,6 +133,18 @@ export default class GODeskScreen extends Component {
         }).catch(err => {
             this.setState({ GODeskMessagesFound: false });
         })
+    }
+
+    
+    getStorageItem = async (key) => {
+        let result = '';
+        try {
+            result = await AsyncStorage.getItem(key) || 'none';
+        } catch (error) {
+            ToastAndroid.showWithGravityAndOffset(error.message, ToastAndroid.LONG, ToastAndroid.BOTTOM, 25, 50);
+        }
+
+        return result;
     }
 
 }

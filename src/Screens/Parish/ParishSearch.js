@@ -56,6 +56,16 @@ export default class ParishSearch extends Component {
             this.getParishes();
         }
         
+        this.getCartItemNumber();
+    }
+
+    async getCartItemNumber() {
+        const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
+        if (productCartItemsStore && productCartItemsStore !== 'none') {
+            const productCartItems2 = JSON.parse(productCartItemsStore);
+            const productCartItems = JSON.parse(productCartItems2);
+            this.setState({ productCartItemNumber: productCartItems.length });
+        }
     }
 
     searchClick() {
@@ -110,7 +120,7 @@ export default class ParishSearch extends Component {
     }
 
     render() {
-        const { parishes, filteredList, search, errors = {} } = this.state;
+        const { parishes, filteredList, search, errors = {}, productCartItemNumber } = this.state;
 
         return (
 
@@ -173,8 +183,11 @@ export default class ParishSearch extends Component {
 
                 </Content>
 
-                <TabNav navigation={this.props.navigation} />
-
+  
+                <TabNav navigation={this.props.navigation}
+                    cartValue={productCartItemNumber? productCartItemNumber : 0} 
+                    gotoCart={() => this.props.navigation.navigate('ProductCartReview')} 
+                />
             </Container>
         );
     }
