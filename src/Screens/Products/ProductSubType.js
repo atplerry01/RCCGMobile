@@ -22,25 +22,6 @@ export default class ProductSubType extends Component {
     }
 
 
-    renderContent() {
-        const { productSubTypes } = this.state;
-
-        if(productSubTypes && productSubTypes.length > 0) {
-            return productSubTypes.map((entity, key) => {
-                return (
-                    <TouchableOpacity style={Styles.btnBox} onPress={() => {
-                        this.props.navigation.navigate('ProductList', { itemId: entity.id })
-                    }}>
-                        <Image source={{ uri: entity.image_url }} resizeMode={'cover'} style={FavStyles.itemImg} />
-                        <Text style={Styles.btnText}>{entity.slug}</Text>
-                    </TouchableOpacity>
-                )
-            })
-        } else {
-            return (<View><Text>Loading ...</Text></View>)
-        }
-    }
-
     async componentDidMount() {
         const itemId = this.props.navigation.getParam('itemId', 'NO-ID');
         // const code = navigation.getParam('code', 'NO-ID'); // TODO:
@@ -54,6 +35,26 @@ export default class ProductSubType extends Component {
             const productCartItems2 = JSON.parse(productCartItemsStore);
             const productCartItems = JSON.parse(productCartItems2);
             this.setState({ productCartItemNumber: productCartItems.length });
+        }
+    }
+
+    
+    renderContent() {
+        const { productSubTypes } = this.state;
+
+        if(productSubTypes && productSubTypes.length > 0) {
+            return productSubTypes.map((entity, key) => {
+                return (
+                    <TouchableOpacity style={Styles.btnBox} onPress={() => {
+                        this.props.navigation.navigate('ProductList', { categoryId: entity.id })
+                    }}>
+                        <Image source={{ uri: entity.image_url }} resizeMode={'cover'} style={FavStyles.itemImg} />
+                        <Text style={Styles.btnText}>{entity.slug}</Text>
+                    </TouchableOpacity>
+                )
+            })
+        } else {
+            return (<View><Text>Loading ...</Text></View>)
         }
     }
 

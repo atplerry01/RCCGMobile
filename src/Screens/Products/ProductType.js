@@ -60,7 +60,7 @@ export default class ProductType extends Component {
 
     render() {
 
-        const { myPaymentHistory } = this.state;
+        const { myPaymentHistory, productCartItemNumber } = this.state;
 
         return (<Container key={this.state.compKey} style={Style.bgMain}>
 

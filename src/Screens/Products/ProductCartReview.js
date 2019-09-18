@@ -17,7 +17,8 @@ export default class ProductCartReview extends React.Component {
 
     state = {
         parishes: {},
-        parishesFound: false
+        parishesFound: false,
+        productString: ''
     }
 
 
@@ -51,12 +52,25 @@ export default class ProductCartReview extends React.Component {
     }
 
     async componentDidMount() {
+        const userTokenStore = await this.getStorageItem('@userToken');
         const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
+        const parishCodeStore = await this.getStorageItem('@parishCodeStore');
+        
+        if (parishCodeStore && parishCodeStore !== 'none') {
+            const parishCode = JSON.parse(parishCodeStore);
+        
+            this.setState({ parishCode });
+        }
 
         if (productCartItemsStore && productCartItemsStore !== 'none') {
             const productCartItems2 = JSON.parse(productCartItemsStore);
             const productCartItems = JSON.parse(productCartItems2);
             this.setState({ productCartItems });
+        }
+
+        if (userTokenStore) {
+            const userProfile = JSON.parse(userTokenStore);
+            this.setState({ userProfile });
         }
 
         // Get ParishCode
@@ -75,28 +89,29 @@ export default class ProductCartReview extends React.Component {
         }
     }
 
-
     gotoProductDetails = (item, index) => {
         this.props.navigation.navigate('ProductDetail', { item: JSON.stringify(item) });
     }
 
-    onlinePaymentPlatform() {
-        this.registerPayment();
-    }
-
     render() {
 
-        const { productItemLists, productCartItemNumber } = this.state;
+        const { userProfile, parishCode, productItemLists, productCartItemNumber } = this.state;
 
         let totalQuantity = 0;
         let totalPrice = 0;
+        let productCodeString = '';
 
         if (productItemLists) {
             productItemLists.forEach((item) => {
                 selQuantity = 1;
                 totalQuantity += item.selQuantity;
                 totalPrice += item.selQuantity * item.item_amount;
-            })
+            });
+
+            // ${accountNos.map(acc => `'${acc}'`).join(',')}
+            // TODO: Concat the Quantity
+            productCodeString = productItemLists.map(m => m.item_code).join(',');
+
         }
 
         return <Container style={Style.bgMain}>
@@ -129,7 +144,7 @@ export default class ProductCartReview extends React.Component {
 
 
                         <Button style={Styles.btn} titleColor='white' onPress={() => {
-                            this.onlinePaymentPlatform()
+                            this.registerPayment(userProfile.email, parishCode, productCodeString, totalPrice, totalQuantity)
                         }}>
                             <Text style={Styles.formBtnText}>{'Process Payment'.toUpperCase()}</Text>
                             <Icon active name="payment" type="MaterialIcons" style={Styles.formBtnIcon} />
@@ -149,11 +164,9 @@ export default class ProductCartReview extends React.Component {
         </Container>
     }
 
-    // userStore, amount, parishCode, itemId
-    registerPayment() {
-        // const pcode = parishCode.replace(/"/g, "");
-        // var data = `userID=${userStore.userID}&currency=NGN&amount=${amount}&parishCode=${pcode}&itemID=${itemId}&channel=app`;
-        var data = "code=01&itemCodes=222346521700000_s01,222346521600000_s01&currency=NGN&amount=220000&channel=web&email=chuka%40hotmail.com&quantities=1%2C1&type=1&address1=&address2=&region=&postal_code=&city=&country=&delivery_notes=&deliever_time=&delivery_date=";
+    async registerPayment(email, parishCode, productCodeString, totalPrice, totalQuantity) {
+        const pcode = parishCode.replace(/"/g, "");
+        var data = `code=${pcode}&itemCodes=${productCodeString}&currency=NGN&amount=${totalPrice}&channel=web&email=${email}&quantities=1&type=1`;
 
         return axios
             .post(config.apiBaseUrl + "/transaction/add", data, {
@@ -162,7 +175,7 @@ export default class ProductCartReview extends React.Component {
                 }
             })
             .then(resp => {
-                const stackValue = resp.data.data.data;
+                const stackValue = resp.data.data;
                 this.props.navigation.navigate('StackSelection', { paydetail: JSON.stringify(resp.data.data.data) })
             })
             .catch(error => {
@@ -173,11 +186,10 @@ export default class ProductCartReview extends React.Component {
 
     getParisheProducts() {
         const { productCartItems } = this.state;
-
+        // TODO: selection should be based on category only
         return axios
-            .get(config.apiBaseUrl + `/product/allProducts?code=01&pageNum=1&pageSize=10&currency=NGN`)
-            .then(resp => {
-
+            .get(config.apiBaseUrl + `/product/allProducts?code=01&pageNum=1&pageSize=100&currency=NGN`)
+            .then(resp => {   
                 const productEntity = resp.data.data;
                 let finalResult = [];
 

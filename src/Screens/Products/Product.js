@@ -27,15 +27,23 @@ export default class ProductScreen extends Component {
         // parishCodeStore
         // parishCategoryStore
         // nationalCategoryStore
-
+        
         const parishCodeStore = await this.getStorageItem('@parishCodeStore');
+
+        console.log('parishCodeStore', parishCodeStore);
+        
         if (parishCodeStore && parishCodeStore !== 'none') {
             const parishCode = JSON.parse(parishCodeStore);
+
+            console.log('parishCode', parishCode);
             this.getParishProductCategory();
             // this.getNationalProductCategory(); //TODO:
+        } else {
+            ToastAndroid.show('You have no active Parish', ToastAndroid.SHORT);
+            this.props.navigation.navigate('ParishSelector');
         }
 
-        this.getParishProductCategory();
+        // this.getParishProductCategory();
         this.getCartItemNumber();
     }
 

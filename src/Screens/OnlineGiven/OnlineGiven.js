@@ -149,11 +149,12 @@ export default class OnlineGivenScreen extends Component {
         );
     }
 
+    // TODO: 
     getPaymentHistory = (userStore) => {
         var data = `userID=${userStore.userID}&pageNum=1&pageSize=5`;
 
         return axios
-            .post(config.apiBaseUrl + "/parish/getOfferingPayments", data, {
+            .post(config.apiBaseUrl + `/parish/getOfferingPayments`, {
                 headers: {
                     "Authorization": `Bearer ${userStore.access_token}`,
                     "Content-Type": "application/x-www-form-urlencoded"

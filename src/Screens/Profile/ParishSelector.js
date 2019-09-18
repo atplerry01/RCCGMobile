@@ -53,15 +53,7 @@ export default class ParishSelectorScreen extends Component {
 
     async componentDidMount() {
         const userToken = await this.getStorageItem('@userToken');
-        // const parishesStore = await this.getStorageItem('@parishesStore');
-
-        // if (parishesStore && parishesStore !== 'none') {
-        //     const parishes1 = JSON.parse(parishesStore);
-        //     const parishes = JSON.parse(parishes1);
-
-        //     this.setState({ parishes });
-        // }
-
+   
         if (userToken && userToken !== 'none') {
             const userData = JSON.parse(userToken);
             this.setState({ userData });
@@ -83,7 +75,6 @@ export default class ParishSelectorScreen extends Component {
 
     searchClick() {
         const { search, parishes } = this.state;
-
         let filteredSearch = [];
 
         if (search === '') {
@@ -98,7 +89,6 @@ export default class ParishSelectorScreen extends Component {
         });
 
         this.setState({ filteredList: filteredSearch });
-
     }
 
     addParishToUser = async (entity) => {
@@ -107,7 +97,7 @@ export default class ParishSelectorScreen extends Component {
         if (userTokenStore && userTokenStore !== 'none') {
             const userToken = JSON.parse(userTokenStore);
             this.updateUserParish(userToken, entity.divisionCode);
-            this.props.navigation.navigate('MyParish');
+           
         }
     }
 
@@ -291,6 +281,8 @@ export default class ParishSelectorScreen extends Component {
 
 
     updateUserParish = async (userStore, parishCode) => {
+        console.log('adding users...');
+        
         var data = `userID=${userStore.userID}&parishCode=${parishCode}`;
 
         return axios
@@ -301,6 +293,7 @@ export default class ParishSelectorScreen extends Component {
                 }
             })
             .then(resp => {
+                this.saveStorageItem('@parishCodeStore', JSON.stringify(parishCode));
                 this.getMyProfile(userStore);
                 // this.getUserParish(userStore, parishCode);
             })
@@ -310,79 +303,27 @@ export default class ParishSelectorScreen extends Component {
     }
 
     getMyProfile(userStore) {
-        var data = `email=${userStore.email}`;
-
         return axios
-            .post(config.apiBaseUrl + "/user/getUser", data, {
+            .get(config.apiBaseUrl + `/user/getUser?email=${userStore.email}`, {
                 headers: {
                     "Authorization": `Bearer ${userStore.access_token}`,
                     "Content-Type": "application/x-www-form-urlencoded"
                 }
             })
             .then(resp => {
+              
                 if (!resp.data.data.user.division.code || resp.data.data.user.division.code === null) {
                     ToastAndroid.show('You have no active Parish', ToastAndroid.SHORT);
-                    //TODO: this.props.navigation.navigate('ParishSelector');
                 } else {
-                    // this.saveStorageItem('@parishCodeStore', JSON.stringify(resp.data.data.user.division.code));
                     ToastAndroid.show(`Parish Updated - Please reload to update`, ToastAndroid.SHORT);
                     this.saveStorageItem('@userProfileStore', JSON.stringify(resp.data.data.user));
-                    // this.getParishDetail(userStore, resp.data.data.user.division.code);
+                    this.props.navigation.navigate('MyParish');
                 }
             })
             .catch(error => {
-                ToastAndroid.show('My Parish: ' + error.message, ToastAndroid.SHORT);
+                ToastAndroid.show('Update Fail: ' + error.message, ToastAndroid.SHORT);
             });
     }
-
-
-    // getUserParish = async (userStore, parishCode) => {
-    //     var data = `userID=${userStore.userID}&parishCode=${parishCode}`;
-
-    //     return axios
-    //         .post(config.apiBaseUrl + "/parish/getParish", data, {
-    //             headers: {
-    //                 "Authorization": `Bearer ${userStore.access_token}`,
-    //                 "Content-Type": "application/x-www-form-urlencoded"
-    //             }
-    //         })
-    //         .then(resp => {
-    //             this.saveStorageItem('@myParishDetailStore', JSON.stringify(resp.data.data));
-    //             this.saveStorageItem('@myParishChangeStore', 'true');
-
-    //             this.getParishItems(userStore, resp.data.data.divisionCode);
-    //         })
-    //         .catch(error => {
-    //             ToastAndroid.show(`An Error Occur - ${error.message}`, ToastAndroid.SHORT);
-    //         });
-    // }
-
-    // getParishItems(userStore, parishCode) {
-    //     const pcode = parishCode.replace(/"/g, "");
-    //     var data = `userID=${userStore.userID}&parishCode=${pcode}`;
-
-    //     return axios
-    //         .post(config.apiBaseUrl + "/parish/getOfferings", data, {
-    //             headers: {
-    //                 "Authorization": `Bearer ${userStore.access_token}`,
-    //                 "Content-Type": "application/x-www-form-urlencoded"
-    //             }
-    //         })
-    //         .then(resp => {
-    //             const parishItems = resp.data.data;
-
-    //             if (parishItems.length > 1) {
-    //                 ToastAndroid.show(parishItems.length + ' payment items found', ToastAndroid.SHORT);
-    //                 this.saveStorageItem('@myParishItemsStore', JSON.stringify(resp.data.data));
-    //                 this.saveStorageItem('@myParishItemsChangeStore', 'true');
-    //             }
-    //         })
-    //         .catch(error => {
-    //             ToastAndroid.show('Parish Items: ' + error.message, ToastAndroid.SHORT);
-    //         });
-    // }
-
-
 
     removeStorageItem = async (key) => {
         try {

@@ -59,6 +59,8 @@ export default class Product extends PureComponent {
         this.setState({ favorite: !obj.favorite });
         const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
 
+        console.log('productCartItemsStore', productCartItemsStore);
+        
         if (obj.favorite) {
             if (productCartItemsStore && productCartItemsStore !== 'none') {
                 const productCartItems2 = JSON.parse(productCartItemsStore);

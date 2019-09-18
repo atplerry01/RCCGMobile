@@ -32,7 +32,13 @@ export default class ProductList extends React.Component {
     }
 
     async componentDidMount() {
+        // categoryId
+        const categoryId = this.props.navigation.getParam('categoryId', 'NO-ID');
         const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
+
+        if (categoryId && categoryId !== 'NO-ID') {
+            this.setState({ categoryId });
+        }
 
         if (productCartItemsStore && productCartItemsStore !== 'none') {
             const productCartItems2 = JSON.parse(productCartItemsStore);
@@ -62,7 +68,7 @@ export default class ProductList extends React.Component {
 
                             renderItem={({ item, index }) => (
                                 <TouchableHighlight underlayColor='transparent'
-                                    onPress={() => { this.props.navigation.navigate('ProductDetail', { itemId: item.id }) }}>
+                                    onPress={() => { this.props.navigation.navigate('ProductDetail', { itemId: item.item_code }) }}>
                                     <Product
                                         id={item.id}
                                         item_name={item.item_name}
@@ -92,14 +98,14 @@ export default class ProductList extends React.Component {
 
 
     getParisheProducts() {
-        const { productCartItems } = this.state;
+        const { productCartItems, categoryId } = this.state;
 
         return axios
-            .get(config.apiBaseUrl + `/product/allProducts?code=01&pageNum=1&pageSize=10&currency=NGN`)
+            .get(config.apiBaseUrl + `/product/productsByCategory?code=10&categoryID=${categoryId}&pageNum=1&pageSize=1&currency=NGN`)
             .then(resp => {
 
-                const productEntity = resp.data.data;
-
+                const productEntity = resp.data.data[0];
+                
                 productEntity.map(p => {
 
                     var entIndx = productEntity.indexOf(p);

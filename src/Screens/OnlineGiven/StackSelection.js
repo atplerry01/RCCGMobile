@@ -49,16 +49,16 @@ export default class StackSelection extends Component {
         const { navigation } = this.props;
         const paySwichDetail = navigation.getParam('paydetail', 'NO-ID');
         const amount = navigation.getParam('amount', 'NO-ID');
-
         const userToken = await this.getStorageItem('@userToken');
 
         if (userToken && userToken !== 'none') {
             const userStore = JSON.parse(userToken);
-            this.setState({ userStore })
+            this.setState({ userStore });
         }
 
         if (paySwichDetail && paySwichDetail !== 'NO-ID') {
             const stackModel = JSON.parse(paySwichDetail);
+            console.log('stackModelxxxxxxxxxxxxxxx: ', stackModel);
             this.setState({ stackModel, amount });
         }
     }
@@ -90,32 +90,40 @@ export default class StackSelection extends Component {
     webViewTemplate() {
         const { userStore, stackModel, amount } = this.state;
 
+        let paymentStack = stackModel[0];
+        let paymentDetail = stackModel[1];
+
         let model = {};
         let flutterDisplay = 'none';
         let interswitchDisplay = 'none';
 
-        if (stackModel) {
+        if (paymentDetail) {
             model = {
-                churchName: stackModel.churchName,
-                itemName: stackModel.itemName,
-                orderId: stackModel.orderId,
-                orderId: stackModel.orderId,
-                transRef: stackModel.transRef
+                churchName: paymentDetail.churchName,
+                itemName: paymentDetail.itemName,
+                orderId: paymentDetail.orderReference,
+                transRef: paymentDetail.transactionReference,
+                dateOfTransaction: paymentDetail.dateOfTransaction
             };
         }
 
-        if (stackModel.gatewayFlutterwave && stackModel.gatewayFlutterwave.length >= 1) {
-            model.flutterSubAccountID = stackModel.gatewayFlutterwave[0].subAccountID;
+        if (paymentStack && paymentStack.flutterwave) { // && stackModel.gatewayFlutterwave.length >= 1
+            model.flutterwave = paymentStack.flutterwave;
+            model.flutterSubAccountID = paymentStack.flutterwave.id;
             flutterDisplay = 'block';
         }
 
-        if (stackModel.gatewayInterswitch && stackModel.gatewayInterswitch.length >= 1) {
+        if (paymentStack && paymentStack.interswitch) { //  && stackModel.gatewayInterswitch.length >= 1
             interswitchDisplay = 'block';
-            model.gatewayInterswitch = stackModel.gatewayInterswitch[0];
-            model.currency = stackModel.gatewayInterswitch[0].currency;
-            model.merchantCode = stackModel.gatewayInterswitch[0].merchant_code;
+            model.interswitch = paymentStack.interswitch;
+            model.clientId = paymentStack.interswitch.clientId;
+            model.clientSecret = paymentStack.interswitch.clientSecret;
+            model.currency = paymentStack.interswitch.currency;
+            model.merchantCode = paymentStack.interswitch.merchant_code;
             model.amount = amount * 100;
         }
+
+        console.log('modelxxxxxxxxxxxxx', model);
 
         if (userStore) {
             model.email = userStore.email,
@@ -373,7 +381,7 @@ export default class StackSelection extends Component {
 
                                         <div class="row">
                                             <div class="column" style="display: ${flutterDisplay}">
-                                                <a href="http://hr.goldenmemoria.com/paystack-flutter.html?email=${model.email}&amount=${amount}&phone=${model.phoneNumber}&flutterId=${model.flutterSubAccountID}&transRef=${model.transRef}" class="form-control-submit-button clickMe">Flutterwave</a>
+                                                <a href="http://hr.goldenmemoria.com/paystack-flutter.html?email=${model.email}&amount=${amount}&phone=${model.phoneNumber}&flutterId=${model.flutterSubAccountID}&transRef=${model.transactionReference}" class="form-control-submit-button clickMe">Flutterwave</a>
                                             </div>
 
                                             <div class="column" style="display: ${interswitchDisplay}">

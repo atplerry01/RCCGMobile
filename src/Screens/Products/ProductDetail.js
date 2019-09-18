@@ -75,7 +75,6 @@ export default class ProductDetail extends Component {
         const { navigation } = this.props;
 
         const productId = navigation.getParam('itemId', 'NO-ID');
-        console.log(productId);
 
         this.getCartItemNumber();
     }

@@ -64,8 +64,14 @@ export default class MyParishScreen extends Component {
 
         const userTokenStore = await this.getStorageItem('@userToken');
         const userProfileStore = await this.getStorageItem('@userProfileStore');
-
+        const parishCodeStore = await this.getStorageItem('@parishCodeStore');
+        
         this.getCartItemNumber();
+
+        if (parishCodeStore && parishCodeStore !== 'none') {
+            const parishCode = JSON.parse(parishCodeStore);
+            console.log('parishCode', parishCode)
+        }
 
         if (userTokenStore && userTokenStore !== 'none' && userProfileStore && userProfileStore !== 'none') {
             const userToken = JSON.parse(userTokenStore);
