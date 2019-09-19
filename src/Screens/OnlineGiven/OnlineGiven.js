@@ -62,7 +62,6 @@ export default class OnlineGivenScreen extends Component {
         }
     }
 
-
     render() {
 
         const { myPaymentHistory, productCartItemNumber } = this.state;

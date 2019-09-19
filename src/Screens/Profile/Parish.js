@@ -70,7 +70,7 @@ export default class MyParishScreen extends Component {
 
         if (parishCodeStore && parishCodeStore !== 'none') {
             const parishCode = JSON.parse(parishCodeStore);
-            console.log('parishCode', parishCode)
+            console.log('parishCode', parishCode);
         }
 
         if (userTokenStore && userTokenStore !== 'none' && userProfileStore && userProfileStore !== 'none') {

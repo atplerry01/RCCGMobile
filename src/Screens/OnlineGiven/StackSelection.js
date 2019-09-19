@@ -47,9 +47,18 @@ export default class StackSelection extends Component {
 
     async componentDidMount() {
         const { navigation } = this.props;
-        const paySwichDetail = navigation.getParam('paydetail', 'NO-ID');
         const amount = navigation.getParam('amount', 'NO-ID');
+        const selectedItems = navigation.getParam('selectedItems', 'NO-ID');
+        const paySwichDetail = navigation.getParam('paydetail', 'NO-ID');
         const userToken = await this.getStorageItem('@userToken');
+        const userProfileStore = await this.getStorageItem('@userProfileStore');
+
+        console.log('selectedItemsxxx ', selectedItems); 
+        if (userProfileStore && userProfileStore !== 'none') {
+            const userProfile2 = JSON.parse(userProfileStore);
+            const userProfile = JSON.parse(userProfile2);
+            this.setState({ userProfile });
+        }
 
         if (userToken && userToken !== 'none') {
             const userStore = JSON.parse(userToken);
@@ -58,8 +67,7 @@ export default class StackSelection extends Component {
 
         if (paySwichDetail && paySwichDetail !== 'NO-ID') {
             const stackModel = JSON.parse(paySwichDetail);
-            console.log('stackModelxxxxxxxxxxxxxxx: ', stackModel);
-            this.setState({ stackModel, amount });
+            this.setState({ stackModel, amount, selectedItems });
         }
     }
 
@@ -88,8 +96,10 @@ export default class StackSelection extends Component {
     }
 
     webViewTemplate() {
-        const { userStore, stackModel, amount } = this.state;
+        const { userProfile, userStore, stackModel, amount, selectedItems } = this.state;
 
+        console.log('selectedItems: ', selectedItems);
+        
         let paymentStack = stackModel[0];
         let paymentDetail = stackModel[1];
 
@@ -100,7 +110,7 @@ export default class StackSelection extends Component {
         if (paymentDetail) {
             model = {
                 churchName: paymentDetail.churchName,
-                itemName: paymentDetail.itemName,
+                itemName: selectedItems, // paymentDetail.itemName,
                 orderId: paymentDetail.orderReference,
                 transRef: paymentDetail.transactionReference,
                 dateOfTransaction: paymentDetail.dateOfTransaction
@@ -123,14 +133,17 @@ export default class StackSelection extends Component {
             model.amount = amount * 100;
         }
 
-        console.log('modelxxxxxxxxxxxxx', model);
+
+
+        if (userProfile) {
+            model.phoneNumber = userProfile.phone
+        }
 
         if (userStore) {
             model.email = userStore.email,
-                model.fullName = userStore.fullName,
-                model.phoneNumber = '' // TODO:*
+            model.fullName = userStore.fullName
         }
-
+        
         const html = `<!DOCTYPE html>
     <html lang="en">
     
@@ -350,7 +363,7 @@ export default class StackSelection extends Component {
                                     <form id="RegistrationForm" data-toggle="validator">
                                         <p><strong>Payment Item</strong></p>
                                         <div class="form-group">
-                                            <input type="text" value="${model.itemName}" 
+                                            <input type="text" value="Items Payment ${model.itemName}" 
                                             class="form-control-input" id="firstname"
                                                 placeholder="First Name" readonly>
                                             <div class="help-block with-errors"></div>
@@ -365,7 +378,7 @@ export default class StackSelection extends Component {
     
                                         <p><strong>Phone Number *</strong></p>
                                         <div class="form-group">
-                                            <input type="text" class="form-control-input" id="phone"
+                                            <input type="text" value="${model.phoneNumber}"  class="form-control-input" id="phone"
                                                 placeholder="Phone Number">
                                             <div class="help-block with-errors"></div>
                                         </div>

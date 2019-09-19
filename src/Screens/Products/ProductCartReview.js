@@ -166,7 +166,11 @@ export default class ProductCartReview extends React.Component {
 
     async registerPayment(email, parishCode, productCodeString, totalPrice, totalQuantity) {
         const pcode = parishCode.replace(/"/g, "");
-        var data = `code=${pcode}&itemCodes=${productCodeString}&currency=NGN&amount=${totalPrice}&channel=web&email=${email}&quantities=1&type=1`;
+
+        const { productItemLists } = this.state;
+        quantityString = productItemLists.map(m => m.selQuantity).join(',');
+        
+        var data = `code=${pcode}&itemCodes=${productCodeString}&currency=NGN&amount=${totalPrice}&channel=web&email=${email}&quantities=${quantityString}&type=1`;
 
         return axios
             .post(config.apiBaseUrl + "/transaction/add", data, {
@@ -176,6 +180,7 @@ export default class ProductCartReview extends React.Component {
             })
             .then(resp => {
                 const stackValue = resp.data.data;
+                console.log('stackValue', stackValue);
                 this.props.navigation.navigate('StackSelection', { paydetail: JSON.stringify(resp.data.data.data) })
             })
             .catch(error => {
@@ -186,6 +191,8 @@ export default class ProductCartReview extends React.Component {
 
     getParisheProducts() {
         const { productCartItems } = this.state;
+        console.log('productCartItems', productCartItems);
+        
         // TODO: selection should be based on category only
         return axios
             .get(config.apiBaseUrl + `/product/allProducts?code=01&pageNum=1&pageSize=100&currency=NGN`)
@@ -198,14 +205,14 @@ export default class ProductCartReview extends React.Component {
                     productCartItems[entIndx].selQuantity = 1;
 
                     const indx = productEntity.findIndex(p => p.id === c.productId);
-
+                    
                     if (indx !== -1) {
                         const mergeData = { ...c, ...productEntity[indx] };
                         finalResult.push(mergeData);
                     }
-
                 });
 
+                console.log('finalResult', finalResult);
                 this.setState({ productItemLists: finalResult })
 
             })

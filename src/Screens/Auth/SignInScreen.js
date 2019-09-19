@@ -98,7 +98,7 @@ class SignInScreen extends Component {
     var data = `email=${userStore.email}`;
 
     return axios
-      .post(config.apiBaseUrl + "/user/getUser", data, {
+      .get(config.apiBaseUrl + `/user/getUser?email=${userStore.email}`, {
         headers: {
           "Authorization": `Bearer ${userStore.access_token}`,
           "Content-Type": "application/x-www-form-urlencoded"
@@ -111,7 +111,7 @@ class SignInScreen extends Component {
         } else {
           this.saveStorageItem('@parishCodeStore', JSON.stringify(resp.data.data.user.division.code));
           this.saveStorageItem('@userProfileStore', JSON.stringify(resp.data.data.user));
-
+          console.log('resp.data.data.user', resp.data.data.user);
           // this.getParishDetail(userStore, resp.data.data.user.division.code);
         }
       })
@@ -312,7 +312,7 @@ class SignInScreen extends Component {
       result = await AsyncStorage.getItem(key) || 'none';
     } catch (error) {
       // Error retrieving data
-      
+
     }
     return result;
   }

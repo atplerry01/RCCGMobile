@@ -311,12 +311,12 @@ export default class ParishSelectorScreen extends Component {
                 }
             })
             .then(resp => {
-              
+                
                 if (!resp.data.data.user.division.code || resp.data.data.user.division.code === null) {
                     ToastAndroid.show('You have no active Parish', ToastAndroid.SHORT);
                 } else {
                     ToastAndroid.show(`Parish Updated - Please reload to update`, ToastAndroid.SHORT);
-                    this.saveStorageItem('@userProfileStore', JSON.stringify(resp.data.data.user));
+                    this.saveStorageItem('@userProfileStore', JSON.stringify(resp.data.data));
                     this.props.navigation.navigate('MyParish');
                 }
             })

@@ -7,6 +7,7 @@ import axios from 'axios';
 import { Container, Content, Tab, Tabs, Text, View } from 'native-base';
 import React, { Component } from 'react';
 import { AsyncStorage, Image, ImageBackground, ToastAndroid, TouchableOpacity } from 'react-native';
+import variable from '../../Constants/shared/variable';
 // import uuid from 'react-native-uuid';
 import { config } from '../../helpers';
 
@@ -14,33 +15,28 @@ export default class ProductScreen extends Component {
 
     constructor(props) {
         super(props);
-        // this.registerListener();
+
+        this.state = {
+            
+        }
     }
-
-    state = {
-
-    }
-
 
     async componentDidMount() {
         // get user ParishCode
         // parishCodeStore
         // parishCategoryStore
         // nationalCategoryStore
-        
+
         const parishCodeStore = await this.getStorageItem('@parishCodeStore');
 
-        console.log('parishCodeStore', parishCodeStore);
-        
         if (parishCodeStore && parishCodeStore !== 'none') {
             const parishCode = JSON.parse(parishCodeStore);
 
-            console.log('parishCode', parishCode);
-            this.getParishProductCategory();
-            // this.getNationalProductCategory(); //TODO:
+            this.getParishProductCategory(parishCode);
+            this.getNationalProductCategory(); //TODO:
         } else {
             ToastAndroid.show('You have no active Parish', ToastAndroid.SHORT);
-            this.props.navigation.navigate('ParishSelector');
+            this.setState({ activeTabValue: 1 });
         }
 
         // this.getParishProductCategory();
@@ -58,7 +54,7 @@ export default class ProductScreen extends Component {
 
     renderParishContent() {
         const { parishProductCategory } = this.state;
-    
+
         if (parishProductCategory && parishProductCategory.length > 0) {
             return parishProductCategory.map((entity, key) => {
                 return (
@@ -86,7 +82,7 @@ export default class ProductScreen extends Component {
                         this.props.navigation.navigate('ProductType', { itemId: entity.id })
                         // this.props.navigation.navigate('StackSelection')
                     }}>
-                        <Image source={{ uri: entity.image_url }} resizeMode={'cover'} style={Styles.btnImg} />
+                        <Image source={{ uri: entity.image_url }} resizeMode={'cover'} style={FavStyles.itemImg} />
                         <Text style={Styles.btnText}>{entity.slug}</Text>
                     </TouchableOpacity>
                 )
@@ -99,7 +95,7 @@ export default class ProductScreen extends Component {
 
     render() {
         const { productCartItemNumber } = this.state;
-        
+
         return (<Container key={this.state.compKey} style={Style.bgMain}>
 
             <Content style={Style.layoutInner} contentContainerStyle={Style.layoutContent}>
@@ -117,7 +113,7 @@ export default class ProductScreen extends Component {
                     {/* source={require('@Asset/images/property-bg.png')} */}
                     <ImageBackground imageStyle={'cover'} style={[Styles.curve, { backgroundColor: colors.green01 }]} />
 
-                    <Tabs tabBarUnderlineStyle={Styles.tabBorder}>
+                    <Tabs initialPage={this.state.activeTabValue} tabBarUnderlineStyle={Styles.tabBorder}>
                         <Tab tabStyle={Styles.tabGrey} textStyle={Styles.tabTextActive} activeTabStyle={Styles.tabGrey} activeTextStyle={Styles.tabTextActive} heading="Parish Products">
                             <View style={Styles.btnLayout}>
                                 {this.renderParishContent()}
@@ -135,22 +131,29 @@ export default class ProductScreen extends Component {
 
             </Content>
 
-  
+
             <TabNav navigation={this.props.navigation}
-                    cartValue={productCartItemNumber? productCartItemNumber : 0} 
-                    gotoCart={() => this.props.navigation.navigate('ProductCartReview')} 
-                />
+                cartValue={productCartItemNumber ? productCartItemNumber : 0}
+                gotoCart={() => this.props.navigation.navigate('ProductCartReview')}
+            />
         </Container>
         );
     }
 
-    getParishProductCategory() {
-        // const pcode = parishCode.replace(/"/g, "");
+    getParishProductCategory(parishCode) {
+        const pcode = parishCode.replace(/"/g, "");
+        
         return axios
-            .get(config.apiBaseUrl + `/product/parents?code=01`)
+            .get(config.apiBaseUrl + `/product/parents?code=${pcode}`)
             .then(resp => {
                 const productCat = resp.data.data;
-                this.setState({ parishProductCategory: productCat })
+
+                if (productCat === 'categories not found') {
+                    this.setState({ parishProductCategory: [] });
+                } else {
+                    this.setState({ parishProductCategory: productCat });
+                }
+                
             })
             .catch(error => {
                 ToastAndroid.show(error.message, ToastAndroid.SHORT);
@@ -158,17 +161,20 @@ export default class ProductScreen extends Component {
     }
 
     getNationalProductCategory() {
-        // const pcode = parishCode.replace(/"/g, "");
-
         return axios
-            .get(config.apiTestUrl + `/product/parents?code=01`)
-            .then(resp => {
-                const productCat = resp.data.data;
-                this.setState({ nationalProductcategory: productCat })
-            })
-            .catch(error => {
-                ToastAndroid.show(error.message, ToastAndroid.SHORT);
-            });
+        .get(config.apiBaseUrl + `/product/parents?code=${variable.nationalParishCode}`)
+        .then(resp => {
+            const productCat = resp.data.data;
+
+            if (productCat === 'categories not found') {
+                this.setState({ nationalProductCategory: [] });
+            } else {
+                this.setState({ nationalProductCategory: productCat });
+            }
+        })
+        .catch(error => {
+            ToastAndroid.show(error.message, ToastAndroid.SHORT);
+        });
     }
 
 

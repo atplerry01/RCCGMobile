@@ -3,7 +3,7 @@ import colors from '@Constants/Colors';
 import Styles from '@Theme/ParishDetail';
 import Style from '@Theme/Style';
 import axios from 'axios';
-import { Button, Container, Content, Icon, Tab, Tabs, Text, View } from 'native-base';
+import { Button, Container, Content, Icon, Right, Tab, Tabs, Text, View } from 'native-base';
 import React, { Component } from 'react';
 import { AsyncStorage, Image, ImageBackground, ToastAndroid } from 'react-native';
 import { Dropdown } from 'react-native-material-dropdown';
@@ -14,20 +14,30 @@ import { config } from '../../helpers';
 //const {width, height} = Dimensions.get('window')
 
 export default class OnlinePayNational extends Component {
+
+    static navigationOptions = ({ navigation }) => ({
+        headerTransparent: true,
+        headerTintColor: '#fff'
+    });
+
     constructor(props) {
         super(props);
 
         this.state = {
+            refreshing: false,
+            uniqueValue: 1,
             parishItems: [],
             parishItem: 'Select Payment Item',
             parish: 'National Parish 22',
             currencyCode: 'NGN',
             firstName: '',
-            lastName: ''
+            lastName: '',
+            lastRefresh: Date(Date.now()).toString()
         };
 
         this.currencyCodeRef = this.updateRef.bind(this, 'currencyCode');
         this.parishRef = this.updateRef.bind(this, 'parish');
+        this.refreshScreen = this.refreshScreen.bind(this)
         // parishItem
 
         this.onSubmit = this.onSubmit.bind(this);
@@ -63,63 +73,132 @@ export default class OnlinePayNational extends Component {
             .forEach(({ name, ref }) => {
                 this.setState({ [name]: text });
             });
+
     }
 
     updateRef(name, ref) {
         this[name] = ref;
     }
 
-    onlinePaymentPlatform() {
-        const { amount, parishItem, userToken } = this.state;
-        
-        if (amount === undefined) {
-            ToastAndroid.show('Please enter Amount', ToastAndroid.SHORT);
+    
+    async componentDidMount() {
+
+        this.registerListener();
+
+        const userTokenStore = await this.getStorageItem('@userToken');
+        const userProfileStore = await this.getStorageItem('@userProfileStore');
+
+        if (userTokenStore && userTokenStore !== 'none' && userProfileStore && userProfileStore !== 'none') {
+            userToken2 = JSON.parse(userTokenStore);
+
+            const userProfileStore0 = JSON.parse(userProfileStore);
+            const userProfile = JSON.parse(userProfileStore0);
+
+            this.setState({ userProfile, userData: userToken2 });
+
         }
-        
+
+        this.getParishItems(variable.nationalParishCode);
+        this.getCartItemNumber();
+
+    }
+
+    onlinePaymentPlatform() {
+        // userProfile.division.code
+        const { amount, parishItem, userProfile, userData } = this.state;
+
+        if (amount === undefined) {
+            ToastAndroid.show('Please select Amount', ToastAndroid.SHORT);
+        }
+
         if (parishItem && parishItem !== 'Select Payment Item') {
-            this.registerPayment(userToken, amount, variable.nationalParishCode, parishItem);
+            this.registerPayment(userData, amount, variable.nationalParishCode, parishItem);
         } else {
             ToastAndroid.show('Please select parish Item', ToastAndroid.SHORT);
         }
     }
 
-    async componentDidMount() {
-        const userToken = await this.getStorageItem('@userToken');
-        let userStore = {};
-
-        if (userToken) {
-            userStore = JSON.parse(userToken);
-            this.setState({ userToken: JSON.parse(userToken) });
-        }
-
-        this.getParishItems(variable.nationalParishCode, userStore);   
-        this.getCartItemNumber();   
+    _headerRightPressed() {
+        this.refreshScreen();
     }
 
-    
+
+    registerListener() {
+        this._subscribe = this.props.navigation.addListener('didFocus', async () => {
+            const myParishChangeStore = await this.getStorageItem('@myParishChangeStore');
+            const myParishItemsStore = await this.getStorageItem('@myParishItemsStore');
+
+            if (myParishItemsStore && myParishItemsStore !== 'none' && myParishChangeStore && myParishChangeStore === 'true') {
+                ToastAndroid.show('Parish Changed', ToastAndroid.SHORT);
+                myParishItems = JSON.parse(myParishItemsStore);
+                this.setState({ myParishItems });
+
+                this.saveStorageItem('@myParishChangeStore', 'false');
+            }
+        });
+    }
+
+    async refreshScreen() {
+
+        const userTokenStore = await this.getStorageItem('@userToken');
+        const userProfileStore = await this.getStorageItem('@userProfileStore');
+
+        if (userTokenStore && userTokenStore !== 'none' && userProfileStore && userProfileStore !== 'none') {
+            userToken2 = JSON.parse(userTokenStore);
+            this.setState({ userData: userToken2 });
+
+            const userProfileStore0 = JSON.parse(userProfileStore);
+            const userProfile = JSON.parse(userProfileStore0);
+
+            if (userProfile.division.code === "") {
+                ToastAndroid.show('You have no active Parish', ToastAndroid.SHORT);
+                this.props.navigation.navigate('ParishSelector');
+            } else {
+                this.getParishItems(userProfile.division.code);
+            }
+        }
+    }
+
     async getCartItemNumber() {
         const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
         if (productCartItemsStore && productCartItemsStore !== 'none') {
-            const productCartItems = JSON.parse(productCartItemsStore);
+            const productCartItems2 = JSON.parse(productCartItemsStore);
+            const productCartItems = JSON.parse(productCartItems2);
             this.setState({ productCartItemNumber: productCartItems.length });
         }
     }
 
+    getParishItems(parishCode) {
+        let pcode = parishCode.replace(/"/g, "");
+
+        return axios
+            .get(config.apiBaseUrl + `/paymentItem/getAll?code=${pcode}&currency=NGN&channel=web`)
+            .then(resp => {
+                if (resp.data.data === 'payment items not found') {
+                    ToastAndroid.show('There is no Parish Item', ToastAndroid.SHORT);
+                    this.setState({ myParishItems: [] });
+                } else {
+                    this.setState({ myParishItems: resp.data.data });
+                }
+            })
+            .catch(error => {
+                ToastAndroid.show('Parish Items: ' + error.message, ToastAndroid.SHORT);
+            });
+    }
 
     render() {
-        let { errors = {}, parish, currencyCode, amount, parishItem, parishItems, productCartItemNumber } = this.state;
+        let { errors = {}, currencyCode, amount, parishItem, myParishItems, productCartItemNumber } = this.state;
 
         var parishItemLists = [];
 
-        if (parishItems) {
-            parishItems.map((item, key) => {
-                parishItemLists.push({ label: item.item_desc, value: item.item_id });
+        if (myParishItems) {
+            myParishItems.map((item, key) => {
+                parishItemLists.push({ label: item.item_desc, value: item.item_code });
             })
         }
-
+        
         return (
             <Container style={Style.bgMain}>
-
                 <Content style={Style.layoutInner} contentContainerStyle={Style.layoutContent}>
                     {/* source={require('@Asset/images/property-bg@2x.png')} */}
                     <ImageBackground source={require('@Asset/images/property-bg.png')} imageStyle={'cover'} style={[Styles.page, { backgroundColor: colors.green01 }]}>
@@ -128,9 +207,23 @@ export default class OnlinePayNational extends Component {
                         </View>
                     </ImageBackground>
 
+
                     <Tabs tabBarUnderlineStyle={Styles.tabBorder}>
                         <Tab tabStyle={Styles.tabGrey} textStyle={Styles.tabText} activeTabStyle={Styles.tabGrey} activeTextStyle={Styles.tabText} heading="Pay Now">
                             <View style={Styles.formBg}>
+
+                                <View style={Styles.message}>
+                                    <View style={Styles.headerBg}>
+                                        {/* <Icon name="envelope" type="FontAwesome" style={Styles.headerIcon} />
+                                        <Text style={Styles.sHeader}>{'Recent Contributions'.toUpperCase()}</Text> */}
+                                        <Right>
+                                            <Button small rounded style={Styles.sBtn} onPress={() => { this.refreshScreen() }}>
+                                                <Text style={Styles.sLink} >Reload</Text>
+                                            </Button>
+                                        </Right>
+                                    </View>
+
+                                </View>
 
                                 <View style={styles.container}>
 
@@ -161,7 +254,7 @@ export default class OnlinePayNational extends Component {
                                             />
                                         </View>
                                     </View>
-                                
+
                                     <Dropdown
                                         ref={this.parishItemRef}
                                         value={parishItem}
@@ -172,6 +265,9 @@ export default class OnlinePayNational extends Component {
 
                                 </View>
 
+                                <View>
+                                    <Text style={{ display: "none" }}>Last Refresh: {this.state.lastRefresh}</Text>
+                                </View>
 
                                 <Button style={Styles.btn} titleColor='white' onPress={() => {
                                     this.onlinePaymentPlatform()
@@ -179,6 +275,7 @@ export default class OnlinePayNational extends Component {
                                     <Text style={Styles.formBtnText}>{'Process Payment'.toUpperCase()}</Text>
                                     <Icon active name="payment" type="MaterialIcons" style={Styles.formBtnIcon} />
                                 </Button>
+
                             </View>
                         </Tab>
 
@@ -187,59 +284,44 @@ export default class OnlinePayNational extends Component {
 
                 </Content>
 
-  
+
                 <TabNav navigation={this.props.navigation}
-                    cartValue={productCartItemNumber? productCartItemNumber : 0} 
-                    gotoCart={() => this.props.navigation.navigate('ProductCartReview')} 
+                    cartValue={productCartItemNumber ? productCartItemNumber : 0}
+                    gotoCart={() => this.props.navigation.navigate('ProductCartReview')}
                 />
             </Container>
 
         );
     }
 
-    getParishItems(parishCode, userStore) {
-
-        var data = `userID=${userStore.userID}`;
-        
-        return axios
-            .post(config.apiBaseUrl + "/national/getOfferings", data, {
-                headers: {
-                    "Authorization": `Bearer ${userStore.access_token}`,
-                    "Content-Type": "application/x-www-form-urlencoded"
-                }
-            })
-            .then(resp => {
-                this.setState({ parishItems: resp.data.data });
-            })
-            .catch(error => {
-                ToastAndroid.show(`An Error Occur - ${error.message}`, ToastAndroid.SHORT);
-            });
-    }
-
-
     registerPayment(userStore, amount, parishCode, itemId) {
-        var data = `userID=${userStore.userID}&currency=NGN&amount=${amount}&parishCode=${parishCode}&itemID=${itemId}&channel=app`;
+        const { parishItem } = this.state;
+
+        let pcode = parishCode.replace(/"/g, "");
+        var data = `code=${pcode}&itemCodes=${parishItem}&currency=NGN&amount=${amount}&channel=web&email=${userStore.email}&quantities=1&type=0`;
+        console.log(data);
         
         return axios
-            .post(config.apiBaseUrl + "/payment/offeringsRegister", data, {
+            .post(config.apiBaseUrl + "/transaction/add", data, {
                 headers: {
-                    "Authorization": `Bearer ${userStore.access_token}`,
                     "Content-Type": "application/x-www-form-urlencoded"
                 }
             })
             .then(resp => {
-                this.props.navigation.navigate('StackSelection',  { paydetail: JSON.stringify(resp.data.data), amount: amount })
+                const stackData = resp.data.data.data;
+                this.props.navigation.navigate('StackSelection', { paydetail: JSON.stringify(stackData), amount: amount })
             })
             .catch(error => {
-                ToastAndroid.show(`An Error Occur - ${error.message}`, ToastAndroid.SHORT);
+                ToastAndroid.show('Register Payment: ' + error.message, ToastAndroid.SHORT);
             });
     }
+
 
     removeStorageItem = async (key) => {
         try {
             await AsyncStorage.removeItem(key);
         } catch (error) {
-            
+
         }
     }
 
@@ -247,7 +329,7 @@ export default class OnlinePayNational extends Component {
         try {
             await AsyncStorage.setItem(key, JSON.stringify(value));
         } catch (error) {
-            
+
         }
     };
 
@@ -256,7 +338,7 @@ export default class OnlinePayNational extends Component {
         try {
             result = await AsyncStorage.getItem(key) || 'none';
         } catch (error) {
-            
+
         }
         return result;
     }
@@ -306,13 +388,8 @@ const styles = {
 
 };
 
-const parishData = [
-    { value: 'National Parish', label: 'National Parish' },
-    { value: 'My Parish', label: 'My Parish' },
-    { value: 'Other Parish', label: 'Other Parish' },
-];
 
 const currencyCodeData = [
     { value: 'NGN' },
-    { value: 'USD' },
+    // { value: 'USD' },
 ];

@@ -65,36 +65,53 @@ export default class OnlinePay extends Component {
         this.setState({ errors });
     }
 
-    onChangeHandler = (value) => {
-        console.log(`Selected value: ${value}`);
-    }
-
-
     onChangeText(text) {
-        console.log(text);
         ['currencyCode', 'amount', 'parish', 'parishItem']
             .map((name) => ({ name, ref: this[name] }))
             .filter(({ ref }) => ref && ref.isFocused())
             .forEach(({ name, ref }) => {
                 this.setState({ [name]: text });
             });
+
     }
-
-
-    // onChangeText(text) {
-    //     console.log(text);
-    // }
 
     updateRef(name, ref) {
         this[name] = ref;
     }
 
+    
+    async componentDidMount() {
+
+        this.registerListener();
+
+        const userTokenStore = await this.getStorageItem('@userToken');
+        const userProfileStore = await this.getStorageItem('@userProfileStore');
+
+        if (userTokenStore && userTokenStore !== 'none' && userProfileStore && userProfileStore !== 'none') {
+            userToken2 = JSON.parse(userTokenStore);
+            this.setState({ userData: userToken2 });
+
+            const userProfileStore0 = JSON.parse(userProfileStore);
+            const userProfile = JSON.parse(userProfileStore0);
+
+            this.setState({ userProfile });
+
+            if (userProfile.division.code === "") {
+                ToastAndroid.show('You have no active Parish', ToastAndroid.SHORT);
+                this.props.navigation.navigate('ParishSelector');
+            } else {
+                // this.getParishDetail(userToken, userProfile.division.code);
+                this.getParishItems(userProfile.division.code);
+            }
+        }
+
+        this.getCartItemNumber();
+
+    }
 
     onlinePaymentPlatform() {
         // userProfile.division.code
-        const { amount, parishItem, userProfile, myParishItems, myParishDetail, userData } = this.state;
-
-        console.log('parishItem', parishItem);
+        const { amount, parishItem, userProfile, userData } = this.state;
 
         if (amount === undefined) {
             ToastAndroid.show('Please select Amount', ToastAndroid.SHORT);
@@ -106,14 +123,6 @@ export default class OnlinePay extends Component {
             ToastAndroid.show('Please select parish Item', ToastAndroid.SHORT);
         }
     }
-
-    // registerListener() {
-    //     this._subscribe = this.props.navigation.addListener('didFocus', async () => {
-    //         const userToken = await this.getStorageItem('@userToken');
-    //         const parishCodeStore = await this.getStorageItem('@parishCodeStore');
-
-    //     });
-    // }
 
     _headerRightPressed() {
         this.refreshScreen();
@@ -156,35 +165,6 @@ export default class OnlinePay extends Component {
         }
     }
 
-    async componentDidMount() {
-
-        this.registerListener();
-
-        const userTokenStore = await this.getStorageItem('@userToken');
-        const userProfileStore = await this.getStorageItem('@userProfileStore');
-
-        if (userTokenStore && userTokenStore !== 'none' && userProfileStore && userProfileStore !== 'none') {
-            userToken2 = JSON.parse(userTokenStore);
-            this.setState({ userData: userToken2 });
-
-            const userProfileStore0 = JSON.parse(userProfileStore);
-            const userProfile = JSON.parse(userProfileStore0);
-            this.setState({ userProfile });
-
-            if (userProfile.division.code === "") {
-                ToastAndroid.show('You have no active Parish', ToastAndroid.SHORT);
-                this.props.navigation.navigate('ParishSelector');
-            } else {
-                // this.getParishDetail(userToken, userProfile.division.code);
-                this.getParishItems(userProfile.division.code);
-            }
-        }
-
-        this.getCartItemNumber();
-
-    }
-
-
     async getCartItemNumber() {
         const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
         if (productCartItemsStore && productCartItemsStore !== 'none') {
@@ -196,7 +176,6 @@ export default class OnlinePay extends Component {
 
     getParishItems(parishCode) {
         let pcode = parishCode.replace(/"/g, "");
-        pcode = '01'; //TODO: 
 
         return axios
             .get(config.apiBaseUrl + `/paymentItem/getAll?code=${pcode}&currency=NGN&channel=web`)
@@ -214,7 +193,7 @@ export default class OnlinePay extends Component {
     }
 
     render() {
-        let { errors = {}, parish, currencyCode, amount, parishItem, myParishItems, productCartItemNumber } = this.state;
+        let { errors = {}, currencyCode, amount, parishItem, myParishItems, productCartItemNumber } = this.state;
 
         var parishItemLists = [];
 
@@ -223,7 +202,7 @@ export default class OnlinePay extends Component {
                 parishItemLists.push({ label: item.item_desc, value: item.item_code });
             })
         }
-
+        
         return (
             <Container style={Style.bgMain}>
                 <Content style={Style.layoutInner} contentContainerStyle={Style.layoutContent}>
@@ -239,7 +218,6 @@ export default class OnlinePay extends Component {
                         <Tab tabStyle={Styles.tabGrey} textStyle={Styles.tabText} activeTabStyle={Styles.tabGrey} activeTextStyle={Styles.tabText} heading="Pay Now">
                             <View style={Styles.formBg}>
 
-
                                 <View style={Styles.message}>
                                     <View style={Styles.headerBg}>
                                         {/* <Icon name="envelope" type="FontAwesome" style={Styles.headerIcon} />
@@ -252,8 +230,6 @@ export default class OnlinePay extends Component {
                                     </View>
 
                                 </View>
-
-
 
                                 <View style={styles.container}>
 
@@ -329,9 +305,7 @@ export default class OnlinePay extends Component {
 
         let pcode = parishCode.replace(/"/g, "");
         pcode = '01'; //TODO: 
-        // var data = `userID=${userStore.userID}&currency=NGN&amount=${amount}&parishCode=${pcode}&itemID=${itemId}&channel=app`;
         var data = `code=${pcode}&itemCodes=${parishItem}&currency=NGN&amount=${amount}&channel=web&email=${userStore.email}&quantities=1&type=0`;
-        console.log('data', data);
 
         return axios
             .post(config.apiBaseUrl + "/transaction/add", data, {
@@ -340,13 +314,10 @@ export default class OnlinePay extends Component {
                 }
             })
             .then(resp => {
-                // console.log('resp', resp.data.data);
                 const stackData = resp.data.data.data;
-
                 this.props.navigation.navigate('StackSelection', { paydetail: JSON.stringify(stackData), amount: amount })
             })
             .catch(error => {
-                console.log('error',error.message);
                 ToastAndroid.show('Register Payment: ' + error.message, ToastAndroid.SHORT);
             });
     }

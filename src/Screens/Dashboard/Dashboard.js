@@ -75,7 +75,6 @@ export default class Dashboard extends Component {
         this.checkInternt();
         const userToken = await this.getStorageItem('@userToken');
         const parishCodeStore = await this.getStorageItem('@parishCodeStore');
-        const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
 
         // New Account and No Parish
         if (parishCodeStore && parishCodeStore !== 'none') {
@@ -95,8 +94,7 @@ export default class Dashboard extends Component {
 
         this.getCartItemNumber();
     }
-    
-   
+
     async getCartItemNumber() {
         const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
         if (productCartItemsStore && productCartItemsStore !== 'none') {

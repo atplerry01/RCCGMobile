@@ -19,6 +19,9 @@ export default class LogOutScreen extends Component {
     }
 
     componentDidMount = async() => {
+        // TODO: Remove Cart System
+        await this.removeStorageItem('@productCartItemsStore');
+        
         await this.removeStorageItem('@userToken');
         await this.removeStorageItem('@basicStore');
         await this.removeStorageItem('@latestParishStore');
