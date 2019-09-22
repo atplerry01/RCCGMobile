@@ -54,17 +54,19 @@ export default class ProductCartReview extends React.Component {
     async componentDidMount() {
         const userTokenStore = await this.getStorageItem('@userToken');
         const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
-        const parishCodeStore = await this.getStorageItem('@parishCodeStore');
-        
-        if (parishCodeStore && parishCodeStore !== 'none') {
-            const parishCode = JSON.parse(parishCodeStore);
-        
-            this.setState({ parishCode });
+        const userProfileStore = await this.getStorageItem('@userProfileStore');
+
+        if (userProfileStore && userProfileStore !== 'none') {
+            const parishCode2 = JSON.parse(userProfileStore);
+            const userProfile = JSON.parse(parishCode2);
+
+            this.setState({ userProfile, parishCode: userProfile.division.code });
         }
 
         if (productCartItemsStore && productCartItemsStore !== 'none') {
             const productCartItems2 = JSON.parse(productCartItemsStore);
             const productCartItems = JSON.parse(productCartItems2);
+
             this.setState({ productCartItems });
         }
 
@@ -75,7 +77,6 @@ export default class ProductCartReview extends React.Component {
 
         // Get ParishCode
         this.getParisheProducts();
-
         this.getCartItemNumber();
 
     }
@@ -101,15 +102,13 @@ export default class ProductCartReview extends React.Component {
         let totalPrice = 0;
         let productCodeString = '';
 
-        if (productItemLists) {
+        if (productItemLists) {            
             productItemLists.forEach((item) => {
                 selQuantity = 1;
                 totalQuantity += item.selQuantity;
                 totalPrice += item.selQuantity * item.item_amount;
             });
 
-            // ${accountNos.map(acc => `'${acc}'`).join(',')}
-            // TODO: Concat the Quantity
             productCodeString = productItemLists.map(m => m.item_code).join(',');
 
         }
@@ -171,7 +170,7 @@ export default class ProductCartReview extends React.Component {
         quantityString = productItemLists.map(m => m.selQuantity).join(',');
         
         var data = `code=${pcode}&itemCodes=${productCodeString}&currency=NGN&amount=${totalPrice}&channel=web&email=${email}&quantities=${quantityString}&type=1`;
-
+        
         return axios
             .post(config.apiBaseUrl + "/transaction/add", data, {
                 headers: {
@@ -180,7 +179,6 @@ export default class ProductCartReview extends React.Component {
             })
             .then(resp => {
                 const stackValue = resp.data.data;
-                console.log('stackValue', stackValue);
                 this.props.navigation.navigate('StackSelection', { paydetail: JSON.stringify(resp.data.data.data) })
             })
             .catch(error => {
@@ -190,35 +188,16 @@ export default class ProductCartReview extends React.Component {
 
 
     getParisheProducts() {
-        const { productCartItems } = this.state;
-        console.log('productCartItems', productCartItems);
-        
-        // TODO: selection should be based on category only
-        return axios
-            .get(config.apiBaseUrl + `/product/allProducts?code=01&pageNum=1&pageSize=100&currency=NGN`)
-            .then(resp => {   
-                const productEntity = resp.data.data;
-                let finalResult = [];
+        const { productCartItems, parishCode } = this.state;
+        ////////////
+        let finalResult = [];
+        productCartItems.map(c => {
+            var entIndx = productCartItems.indexOf(c);
+            productCartItems[entIndx].selQuantity = 1;
+        });
 
-                productCartItems.map(c => {
-                    var entIndx = productCartItems.indexOf(c);
-                    productCartItems[entIndx].selQuantity = 1;
+        this.setState({ productItemLists: productCartItems })
 
-                    const indx = productEntity.findIndex(p => p.id === c.productId);
-                    
-                    if (indx !== -1) {
-                        const mergeData = { ...c, ...productEntity[indx] };
-                        finalResult.push(mergeData);
-                    }
-                });
-
-                console.log('finalResult', finalResult);
-                this.setState({ productItemLists: finalResult })
-
-            })
-            .catch(error => {
-                ToastAndroid.show(error.message, ToastAndroid.SHORT);
-            });
     }
 
 

@@ -95,7 +95,6 @@ class SignInScreen extends Component {
   }
 
   getMyProfile(userStore) {
-    var data = `email=${userStore.email}`;
 
     return axios
       .get(config.apiBaseUrl + `/user/getUser?email=${userStore.email}`, {
@@ -107,12 +106,8 @@ class SignInScreen extends Component {
       .then(resp => {
         if (!resp.data.data.user.division.code || resp.data.data.user.division.code === null) {
           ToastAndroid.show('You have no active Parish', ToastAndroid.SHORT);
-          //TODO: this.props.navigation.navigate('ParishSelector');
         } else {
-          this.saveStorageItem('@parishCodeStore', JSON.stringify(resp.data.data.user.division.code));
           this.saveStorageItem('@userProfileStore', JSON.stringify(resp.data.data.user));
-          console.log('resp.data.data.user', resp.data.data.user);
-          // this.getParishDetail(userStore, resp.data.data.user.division.code);
         }
       })
       .catch(error => {

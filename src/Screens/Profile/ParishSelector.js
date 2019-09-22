@@ -62,7 +62,6 @@ export default class ParishSelectorScreen extends Component {
         }
     }
 
-    
     async getCartItemNumber() {
         const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
         if (productCartItemsStore && productCartItemsStore !== 'none') {
@@ -97,7 +96,6 @@ export default class ParishSelectorScreen extends Component {
         if (userTokenStore && userTokenStore !== 'none') {
             const userToken = JSON.parse(userTokenStore);
             this.updateUserParish(userToken, entity.divisionCode);
-           
         }
     }
 
@@ -135,7 +133,7 @@ export default class ParishSelectorScreen extends Component {
 
 
     render() {
-        const { parishes, filteredList, search, errors = {}, productCartItemNumber } = this.state;
+        const { filteredList, productCartItemNumber } = this.state;
 
         return (
 
@@ -254,16 +252,15 @@ export default class ParishSelectorScreen extends Component {
 
 
     getParishes(userData) {
-        var data = `userID=${userData.userID}&pageNum=1&pageSize=50`;
 
         return axios
-            .post(config.apiBaseUrl + "/parish/getParishes", data, {
+            .get(config.apiBaseUrl + `/merchant/getAll?username=${userData.email}&pageNum=1&pageSize=100`, {
                 headers: {
                     "Authorization": `Bearer ${userData.access_token}`,
                     "Content-Type": "application/x-www-form-urlencoded"
                 }
             })
-            .then(resp => {
+            .then(resp => {                
                 var data = resp.data.data ? resp.data.data : false;
 
                 if (data) {
@@ -280,9 +277,7 @@ export default class ParishSelectorScreen extends Component {
     }
 
 
-    updateUserParish = async (userStore, parishCode) => {
-        console.log('adding users...');
-        
+    updateUserParish = async (userStore, parishCode) => {        
         var data = `userID=${userStore.userID}&parishCode=${parishCode}`;
 
         return axios
@@ -316,7 +311,7 @@ export default class ParishSelectorScreen extends Component {
                     ToastAndroid.show('You have no active Parish', ToastAndroid.SHORT);
                 } else {
                     ToastAndroid.show(`Parish Updated - Please reload to update`, ToastAndroid.SHORT);
-                    this.saveStorageItem('@userProfileStore', JSON.stringify(resp.data.data));
+                    this.saveStorageItem('@userProfileStore', JSON.stringify(resp.data.data.user));
                     this.props.navigation.navigate('MyParish');
                 }
             })

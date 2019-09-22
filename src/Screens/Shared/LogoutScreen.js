@@ -27,7 +27,7 @@ export default class LogOutScreen extends Component {
         await this.removeStorageItem('@latestParishStore');
         await this.removeStorageItem('@userParishStore');
         await this.removeStorageItem('@parishCodeStore');
-
+        
         await this.removeStorageItem('@userProfileStore');
         await this.removeStorageItem('@myParishDetailStore');
         await this.removeStorageItem('@myParishItemsStore');

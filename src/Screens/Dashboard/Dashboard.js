@@ -86,8 +86,9 @@ export default class Dashboard extends Component {
 
         if (userToken && userToken !== 'none') {
             const userData = JSON.parse(userToken);
+
             this.getLatestParishes(userData);
-            
+
         } else {
             this.props.navigation.navigate('Auth');
         }
@@ -110,7 +111,6 @@ export default class Dashboard extends Component {
         this.props.navigation.navigate('ParishSearch', { 'parishItem': search });
     }
 
-    
     render() {
         const { latestParishes, productCartItemNumber } = this.state;
 
@@ -253,13 +253,14 @@ export default class Dashboard extends Component {
         );
     }
 
-
     getLatestParishes(userStore) {
         var data = `userID=${userStore.userID}&pageNum=1&pageSize=5`;
 
         return axios
-            .post(config.apiBaseUrl + "/parish/getParishes", data, {
-                headers: { "Authorization": `Bearer ${userStore.access_token}`, "Content-Type": "application/x-www-form-urlencoded" }
+            .get(config.apiBaseUrl + `/merchant/getAll?username=${userStore.email}&pageNum=1&pageSize=5`, {
+                headers: { 
+                    "Authorization": `Bearer ${userStore.access_token}`, 
+                    "Content-Type": "application/x-www-form-urlencoded" }
             })
             .then(resp => {
                 ToastAndroid.show('Latest Parish Loaded', ToastAndroid.SHORT);
@@ -269,7 +270,6 @@ export default class Dashboard extends Component {
                 ToastAndroid.show('Parish: ' + error.message, ToastAndroid.SHORT);
             });
     }
-
 
     saveStorageItem = async (key, value) => {
         try {

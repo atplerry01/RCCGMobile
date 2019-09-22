@@ -89,12 +89,11 @@ export default class OnlinePay extends Component {
 
         if (userTokenStore && userTokenStore !== 'none' && userProfileStore && userProfileStore !== 'none') {
             userToken2 = JSON.parse(userTokenStore);
-            this.setState({ userData: userToken2 });
 
             const userProfileStore0 = JSON.parse(userProfileStore);
             const userProfile = JSON.parse(userProfileStore0);
-
-            this.setState({ userProfile });
+            
+            this.setState({ userProfile, userData: userToken2 });
 
             if (userProfile.division.code === "") {
                 ToastAndroid.show('You have no active Parish', ToastAndroid.SHORT);
@@ -176,6 +175,7 @@ export default class OnlinePay extends Component {
 
     getParishItems(parishCode) {
         let pcode = parishCode.replace(/"/g, "");
+        pcode = '01';
 
         return axios
             .get(config.apiBaseUrl + `/paymentItem/getAll?code=${pcode}&currency=NGN&channel=web`)
@@ -301,12 +301,20 @@ export default class OnlinePay extends Component {
     }
 
     registerPayment(userStore, amount, parishCode, itemId) {
-        const { parishItem } = this.state;
+        const { parishItem, myParishItems } = this.state;
 
         let pcode = parishCode.replace(/"/g, "");
-        pcode = '01'; //TODO: 
+        pcode = '01'; // TODO: remove hard code
+        let newItemList = {};
+        // get the item name
+        if (myParishItems) {
+            newItemList = myParishItems.filter(function (obj) {
+                return obj.item_code === parishItem;
+            });
+        }
+                
         var data = `code=${pcode}&itemCodes=${parishItem}&currency=NGN&amount=${amount}&channel=web&email=${userStore.email}&quantities=1&type=0`;
-
+        
         return axios
             .post(config.apiBaseUrl + "/transaction/add", data, {
                 headers: {
@@ -315,13 +323,12 @@ export default class OnlinePay extends Component {
             })
             .then(resp => {
                 const stackData = resp.data.data.data;
-                this.props.navigation.navigate('StackSelection', { paydetail: JSON.stringify(stackData), amount: amount })
+                this.props.navigation.navigate('StackSelection', { paydetail: JSON.stringify(stackData), amount: amount, itemName: newItemList[0].item_desc })
             })
             .catch(error => {
                 ToastAndroid.show('Register Payment: ' + error.message, ToastAndroid.SHORT);
             });
     }
-
 
     removeStorageItem = async (key) => {
         try {

@@ -17,7 +17,7 @@ export default class ProductScreen extends Component {
         super(props);
 
         this.state = {
-            
+
         }
     }
 
@@ -26,20 +26,25 @@ export default class ProductScreen extends Component {
         // parishCodeStore
         // parishCategoryStore
         // nationalCategoryStore
-
+        // userProfileStore
         const parishCodeStore = await this.getStorageItem('@parishCodeStore');
+        const userProfileStore = await this.getStorageItem('@userProfileStore');
 
-        if (parishCodeStore && parishCodeStore !== 'none') {
-            const parishCode = JSON.parse(parishCodeStore);
+        if (userProfileStore && userProfileStore !== 'none') {
+            const userProfile2 = JSON.parse(userProfileStore);
+            const userProfile = JSON.parse(userProfile2);
 
-            this.getParishProductCategory(parishCode);
-            this.getNationalProductCategory(); //TODO:
-        } else {
-            ToastAndroid.show('You have no active Parish', ToastAndroid.SHORT);
-            this.setState({ activeTabValue: 1 });
+            if (userProfile.division.code !== '') {
+                this.setState({ divisionCode: userProfile.division.code })
+                this.getParishProductCategory(userProfile.division.code);
+                this.getNationalProductCategory();
+            } else {
+                ToastAndroid.show('You have no active Parish', ToastAndroid.SHORT);
+                this.setState({ activeTabValue: 1 });
+            }
+
         }
 
-        // this.getParishProductCategory();
         this.getCartItemNumber();
     }
 
@@ -53,13 +58,13 @@ export default class ProductScreen extends Component {
     }
 
     renderParishContent() {
-        const { parishProductCategory } = this.state;
+        const { parishProductCategory, divisionCode } = this.state;
 
         if (parishProductCategory && parishProductCategory.length > 0) {
             return parishProductCategory.map((entity, key) => {
                 return (
                     <TouchableOpacity style={Styles.btnBox} onPress={() => {
-                        this.props.navigation.navigate('ProductType', { itemId: entity.id })
+                        this.props.navigation.navigate('ProductType', { itemId: entity.id, divisionCode })
                     }}>
                         <Image source={{ uri: entity.image_url }} resizeMode={'cover'} style={FavStyles.itemImg} />
                         <Text style={Styles.btnText}>{entity.slug}</Text>
@@ -79,8 +84,7 @@ export default class ProductScreen extends Component {
             return nationalProductCategory.map((entity, key) => {
                 return (
                     <TouchableOpacity style={Styles.btnBox} onPress={() => {
-                        this.props.navigation.navigate('ProductType', { itemId: entity.id })
-                        // this.props.navigation.navigate('StackSelection')
+                        this.props.navigation.navigate('ProductType', { itemId: entity.id, divisionCode: variable.nationalParishCode })
                     }}>
                         <Image source={{ uri: entity.image_url }} resizeMode={'cover'} style={FavStyles.itemImg} />
                         <Text style={Styles.btnText}>{entity.slug}</Text>
@@ -142,7 +146,7 @@ export default class ProductScreen extends Component {
 
     getParishProductCategory(parishCode) {
         const pcode = parishCode.replace(/"/g, "");
-        
+
         return axios
             .get(config.apiBaseUrl + `/product/parents?code=${pcode}`)
             .then(resp => {
@@ -153,7 +157,7 @@ export default class ProductScreen extends Component {
                 } else {
                     this.setState({ parishProductCategory: productCat });
                 }
-                
+
             })
             .catch(error => {
                 ToastAndroid.show(error.message, ToastAndroid.SHORT);
@@ -162,19 +166,19 @@ export default class ProductScreen extends Component {
 
     getNationalProductCategory() {
         return axios
-        .get(config.apiBaseUrl + `/product/parents?code=${variable.nationalParishCode}`)
-        .then(resp => {
-            const productCat = resp.data.data;
+            .get(config.apiBaseUrl + `/product/parents?code=${variable.nationalParishCode}`)
+            .then(resp => {
+                const productCat = resp.data.data;
 
-            if (productCat === 'categories not found') {
-                this.setState({ nationalProductCategory: [] });
-            } else {
-                this.setState({ nationalProductCategory: productCat });
-            }
-        })
-        .catch(error => {
-            ToastAndroid.show(error.message, ToastAndroid.SHORT);
-        });
+                if (productCat === 'categories not found') {
+                    this.setState({ nationalProductCategory: [] });
+                } else {
+                    this.setState({ nationalProductCategory: productCat });
+                }
+            })
+            .catch(error => {
+                ToastAndroid.show(error.message, ToastAndroid.SHORT);
+            });
     }
 
 
@@ -207,5 +211,4 @@ export default class ProductScreen extends Component {
         }
         return result;
     }
-    // TODO: Get all the trasaction done
 }

@@ -5,7 +5,7 @@ import axios from 'axios';
 import { MapView } from 'expo';
 import { Container, Content, Icon, Text, View } from 'native-base';
 import React, { Component } from 'react';
-import { AsyncStorage, ImageBackground, StatusBar } from 'react-native';
+import { AsyncStorage, ImageBackground, StatusBar, ToastAndroid } from 'react-native';
 import { config } from '../../helpers';
 
 //const {width, height} = Dimensions.get('window')
@@ -30,6 +30,7 @@ export default class ParishDetail extends Component {
 
         if (userToken && userToken !== 'none') {
             const userData = JSON.parse(userToken);
+            
             this.getParishDetail(userData, itemId);
         }
 
@@ -63,16 +64,6 @@ export default class ParishDetail extends Component {
 
     renderContent() {
         const { parishDetail } = this.state;
-
-        // if (parishDetail) {
-        //     parishDetail.parishGalleryLists.forEach(val => {
-        //         gallaryLists.push({ image: val.imagePath });
-        //     });
-
-        //     parishDetail.parishSponsorLists.forEach(val => {
-        //         sponsorList.push({ image: val.imagePath });
-        //     });
-        // }
 
         if (this.state.parishDetail) {
             return (
@@ -197,8 +188,31 @@ export default class ParishDetail extends Component {
         );
     }
 
+    getParishDetail(userData, parishCode) {
+        const pcode = parishCode.replace(/"/g, "");
+        
+        return axios
+            .get(config.apiBaseUrl + `/merchant/getOne?username=${userData.email}&divisionCode=${pcode}&merchantID=3`, {
+                headers: {
+                    "Authorization": `Bearer ${userData.access_token}`,
+                    "Content-Type": "application/x-www-form-urlencoded"
+                }
+            })
+            .then(resp => {
+                this.setState({ parishDetail: resp.data.data })
+                // this.saveStorageItem('@myParishDetailStore', JSON.stringify(resp.data.data));
+            })
+            .catch(error => {
+                ToastAndroid.show(`An Error Occur - ${error.message}`, ToastAndroid.SHORT);
+            });
+
+    }
     
-    getParishDetail = (userStore, parishCode) => {
+
+
+
+
+    xxxxxx = (userStore, parishCode) => {
         var data = `userID=${userStore.userID}&parishCode=${parishCode}&pageNum=1&pageSize=1`;
 
         return axios
@@ -216,7 +230,7 @@ export default class ParishDetail extends Component {
             });
     }
 
-    getParishDetail2 = (parishCode) => {
+    xxxxxxxxx = (parishCode) => {
         axios.get(config.apiUrl + `/api/parishes/${parishCode}`).then(res => {
             var data = res.data ? res.data : false;
 

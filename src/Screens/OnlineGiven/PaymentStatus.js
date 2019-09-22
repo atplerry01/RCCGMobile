@@ -176,5 +176,5 @@ export default class PaymentStatus extends Component {
         }
         return result;
     }
-    // TODO: Get all the trasaction done
+    
 }

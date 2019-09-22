@@ -49,6 +49,14 @@ export default class StackSelection extends Component {
         const { navigation } = this.props;
         const paySwichDetail = navigation.getParam('paydetail', 'NO-ID');
         const userToken = await this.getStorageItem('@userToken');
+        const userProfileStore = await this.getStorageItem('@userProfileStore');
+
+        
+        if (userProfileStore && userProfileStore !== 'none') {
+            const userProfile2 = JSON.parse(userProfileStore);
+            const userProfile = JSON.parse(userProfile2);
+            this.setState({ userProfile });
+        }
 
         if (userToken && userToken !== 'none') {
             const userStore = JSON.parse(userToken);
@@ -91,7 +99,7 @@ export default class StackSelection extends Component {
     }
 
     webViewTemplate(firstPayload, secondPayload) {
-        let { userStore, amount } = this.state;
+        let { userProfile, userStore, amount } = this.state;
 
         let model = {};
         let flutterDisplay = 'none';
@@ -114,8 +122,11 @@ export default class StackSelection extends Component {
 
         if (userStore) {
             model.email = userStore.email,
-            model.fullName = userStore.fullName,
-            model.phoneNumber = '' // TODO:*
+            model.fullName = userStore.fullName
+        }
+
+        if (userProfile) {
+            model.phoneNumber = userProfile.phone
         }
 
         const html = `<!DOCTYPE html>
@@ -352,7 +363,7 @@ export default class StackSelection extends Component {
     
                                         <p><strong>Phone Number *</strong></p>
                                         <div class="form-group">
-                                            <input type="text" class="form-control-input" id="phone"
+                                            <input type="text" value="${model.phoneNumber}" class="form-control-input" id="phone"
                                                 placeholder="Phone Number">
                                             <div class="help-block with-errors"></div>
                                         </div>

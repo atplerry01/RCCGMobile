@@ -91,7 +91,7 @@ export default class GODeskScreen extends Component {
                                     </Button>
                                 </Right>
                             </View>
-                            {/* TODO:  DataLists*/}
+                           
                             <FlatList
                                 data={GODeskMessages}
                                 style={Styles.item}

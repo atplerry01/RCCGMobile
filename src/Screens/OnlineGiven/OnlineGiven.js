@@ -41,16 +41,7 @@ export default class OnlineGivenScreen extends Component {
 
     async componentDidMount() {
 
-        // this.registerListener();
-        const userToken = await this.getStorageItem('@userToken');
-        const myPaymentHistoryStore = await this.getStorageItem('@myPaymentHistoryStore');
-
-        if (userToken) {
-            const userData = JSON.parse(userToken);
-            this.getPaymentHistory(userData);
-            this.getCartItemNumber();
-        }
-
+        this.getCartItemNumber();
     }
     
     async getCartItemNumber() {
@@ -168,29 +159,6 @@ export default class OnlineGivenScreen extends Component {
             });
     }
 
-    getMyProfile(userStore) {
-        var data = `email=${userStore.email}`;
-        
-        return axios
-            .post(config.apiBaseUrl + "/user/getUser", data, {
-                headers: {
-                    "Authorization": `Bearer ${userStore.access_token}`,
-                    "Content-Type": "application/x-www-form-urlencoded"
-                }
-            })
-            .then(resp => {
-                if (resp.data.data.user.division.code) {
-                    this.saveStorageItem('@parishCodeStore', JSON.stringify(resp.data.data.user.division.code));
-                } else {
-                    this.props.navigation.navigate('ParishSelector');
-                }
-            })
-            .catch(error => {
-                ToastAndroid.show('My Profile: ' + error.message, ToastAndroid.SHORT);
-            });
-    }
-
-
     removeStorageItem = async (key) => {
         try {
             await AsyncStorage.removeItem(key);
@@ -219,5 +187,5 @@ export default class OnlineGivenScreen extends Component {
         }
         return result;
     }
-    // TODO: Get all the trasaction done
+    
 }

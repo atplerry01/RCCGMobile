@@ -20,15 +20,14 @@ export default class ProductType extends Component {
 
     }
 
-
     renderContent() {
-        const { productTypes } = this.state;
-
+        const { productTypes, divisionCode } = this.state;
+        
         if(productTypes && productTypes.length > 0) {
             return productTypes.map((entity, key) => {
                 return (
                     <TouchableOpacity style={Styles.btnBox} onPress={() => {
-                        this.props.navigation.navigate('ProductSubType', { itemId: entity.id })
+                        this.props.navigation.navigate('ProductSubType', { itemId: entity.id, divisionCode })
                     }}>
                         <Image source={{ uri: entity.image_url }} resizeMode={'cover'} style={FavStyles.itemImg} />
                         <Text style={Styles.btnText}>{entity.slug}</Text>
@@ -43,8 +42,10 @@ export default class ProductType extends Component {
 
     async componentDidMount() {
         const itemId = this.props.navigation.getParam('itemId', 'NO-ID');
-        // const code = navigation.getParam('code', 'NO-ID'); // TODO:
-        this.getProductTypes(itemId);
+        const code = this.props.navigation.getParam('divisionCode', 'NO-ID'); // TODO:
+        this.setState({ divisionCode: code });
+
+        this.getProductTypes(code, itemId);
         this.getCartItemNumber();
         
     }
@@ -60,7 +61,7 @@ export default class ProductType extends Component {
 
     render() {
 
-        const { myPaymentHistory, productCartItemNumber } = this.state;
+        const { productCartItemNumber } = this.state;
 
         return (<Container key={this.state.compKey} style={Style.bgMain}>
 
@@ -99,19 +100,23 @@ export default class ProductType extends Component {
         );
     }
 
-    getProductTypes(parentId) {
+    getProductTypes(code, parentId) {        
         return axios
-            .get(config.apiBaseUrl + `/product/parents?code=01&parentId=${parentId}`)
+            .get(config.apiBaseUrl + `/product/parents?code=${code}&parentId=${parentId}`)
             .then(resp => {
                 const entity = resp.data.data;
-                this.setState({ productTypes: entity })
+
+                if (entity !== 'categories not found') {
+                    this.setState({ productTypes: entity });
+                } else {
+                    this.setState({ productTypes: [] });
+                }
+                
             })
             .catch(error => {
                 ToastAndroid.show(error.message, ToastAndroid.SHORT);
             });
     }
-
-
 
     removeStorageItem = async (key) => {
         try {

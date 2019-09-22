@@ -114,8 +114,7 @@ export default class ProductPaymentStack extends Component {
 
         if (userStore) {
             model.email = userStore.email,
-            model.fullName = userStore.fullName,
-            model.phoneNumber = '' // TODO:*
+            model.fullName = userStore.fullName
         }
 
         const html = `<!DOCTYPE html>

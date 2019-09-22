@@ -35,6 +35,7 @@ export default class ProductList extends React.Component {
         // categoryId
         const categoryId = this.props.navigation.getParam('categoryId', 'NO-ID');
         const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
+        const code = this.props.navigation.getParam('divisionCode', 'NO-ID');
 
         if (categoryId && categoryId !== 'NO-ID') {
             this.setState({ categoryId });
@@ -46,7 +47,7 @@ export default class ProductList extends React.Component {
             this.setState({ productCartItems });
         }
 
-        this.getParisheProducts();
+        this.getParisheProducts(code);
         this.getCartItemNumber();
     }
 
@@ -96,32 +97,33 @@ export default class ProductList extends React.Component {
         </Container>
     }
 
-
-    getParisheProducts() {
+    getParisheProducts(code) {
         const { productCartItems, categoryId } = this.state;
 
         return axios
-            .get(config.apiBaseUrl + `/product/productsByCategory?code=10&categoryID=${categoryId}&pageNum=1&pageSize=1&currency=NGN`)
+            .get(config.apiBaseUrl + `/product/productsByCategory?code=${code}&categoryID=${categoryId}&pageNum=1&pageSize=1&currency=NGN`)
             .then(resp => {
-
-                const productEntity = resp.data.data[0];
                 
-                productEntity.map(p => {
+                const productEntity = resp.data.data[0]; // There are 2 object pick the first
+                
+                if (resp.data.data !== 'products not found') {
+                    productEntity.map(p => {
+                        var entIndx = productEntity.indexOf(p);
+                        productEntity[entIndx].favorite = false;
 
-                    var entIndx = productEntity.indexOf(p);
-                    productEntity[entIndx].favorite = false;
+                        if (productCartItems && productCartItems.length > 0) {
+                            const indx = productCartItems.findIndex(c => c.productId === p.id);
 
-                    if (productCartItems && productCartItems.length > 0) {
-                        const indx = productCartItems.findIndex(c => c.productId === p.id);
-
-                        if (indx !== -1) {
-                            productEntity[entIndx].favorite = true;
+                            if (indx !== -1) {
+                                productEntity[entIndx].favorite = true;
+                            }
                         }
-                    }
-
-                });
-
-                this.setState({ productItemLists: productEntity })
+                    });
+    
+                    this.setState({ productItemLists: productEntity })
+                } else {
+                    this.setState({ productItemLists: [] })
+                }
 
             })
             .catch(error => {

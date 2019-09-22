@@ -50,10 +50,10 @@ export default class StackSelection extends Component {
         const amount = navigation.getParam('amount', 'NO-ID');
         const selectedItems = navigation.getParam('selectedItems', 'NO-ID');
         const paySwichDetail = navigation.getParam('paydetail', 'NO-ID');
+        const itemName = navigation.getParam('itemName', 'NO-ID');
         const userToken = await this.getStorageItem('@userToken');
         const userProfileStore = await this.getStorageItem('@userProfileStore');
 
-        console.log('selectedItemsxxx ', selectedItems); 
         if (userProfileStore && userProfileStore !== 'none') {
             const userProfile2 = JSON.parse(userProfileStore);
             const userProfile = JSON.parse(userProfile2);
@@ -67,7 +67,7 @@ export default class StackSelection extends Component {
 
         if (paySwichDetail && paySwichDetail !== 'NO-ID') {
             const stackModel = JSON.parse(paySwichDetail);
-            this.setState({ stackModel, amount, selectedItems });
+            this.setState({ stackModel, amount, selectedItems: itemName });
         }
     }
 
@@ -97,8 +97,6 @@ export default class StackSelection extends Component {
 
     webViewTemplate() {
         const { userProfile, userStore, stackModel, amount, selectedItems } = this.state;
-
-        console.log('selectedItems: ', selectedItems);
         
         let paymentStack = stackModel[0];
         let paymentDetail = stackModel[1];
@@ -363,7 +361,7 @@ export default class StackSelection extends Component {
                                     <form id="RegistrationForm" data-toggle="validator">
                                         <p><strong>Payment Item</strong></p>
                                         <div class="form-group">
-                                            <input type="text" value="Items Payment ${model.itemName}" 
+                                            <input type="text" value="${model.itemName}" 
                                             class="form-control-input" id="firstname"
                                                 placeholder="First Name" readonly>
                                             <div class="help-block with-errors"></div>

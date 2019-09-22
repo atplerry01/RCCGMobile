@@ -22,18 +22,6 @@ export default class MyParishScreen extends Component {
         lastRefresh: Date(Date.now()).toString()
     }
 
-    // registerListener() {
-    //     this._subscribe = this.props.navigation.addListener('didFocus', async () => {
-    //         const myParishChangeStore = await this.getStorageItem('@myParishChangeStore');
-    //         const myParishDetailStore = await this.getStorageItem('@myParishDetailStore');
-
-    //         if (myParishDetailStore && myParishDetailStore !== 'none' && myParishChangeStore && myParishChangeStore === 'true') {
-    //             ToastAndroid.show('Parish Changed', ToastAndroid.SHORT);
-    //             this.saveStorageItem('@myParishChangeStore', 'false');
-    //         }
-    //     });
-    // }
-
     registerListener() {
         this._subscribe = this.props.navigation.addListener('didFocus', async () => {
             const userTokenStore = await this.getStorageItem('@userToken');
@@ -64,20 +52,15 @@ export default class MyParishScreen extends Component {
 
         const userTokenStore = await this.getStorageItem('@userToken');
         const userProfileStore = await this.getStorageItem('@userProfileStore');
-        const parishCodeStore = await this.getStorageItem('@parishCodeStore');
-        
-        this.getCartItemNumber();
+        this.setState({ lastRefresh: Date(Date.now()).toString() });
 
-        if (parishCodeStore && parishCodeStore !== 'none') {
-            const parishCode = JSON.parse(parishCodeStore);
-            console.log('parishCode', parishCode);
-        }
+        this.getCartItemNumber();
 
         if (userTokenStore && userTokenStore !== 'none' && userProfileStore && userProfileStore !== 'none') {
             const userToken = JSON.parse(userTokenStore);
 
-            const userProfileStore0 = JSON.parse(userProfileStore);
-            const userProfile = JSON.parse(userProfileStore0);
+            const userProfile2 = JSON.parse(userProfileStore);
+            const userProfile = JSON.parse(userProfile2);
 
             if (userProfile.division.code === "") {
                 ToastAndroid.show('You have no active Parish', ToastAndroid.SHORT);
@@ -85,13 +68,9 @@ export default class MyParishScreen extends Component {
             } else {
                 this.getParishDetail(userToken, userProfile.division.code);
             }
-        } else {
-            ToastAndroid.show('You have no active Parish', ToastAndroid.SHORT);
-            this.props.navigation.navigate('ParishSelector');
         }
     }
 
-    
     async getCartItemNumber() {
         const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
         if (productCartItemsStore && productCartItemsStore !== 'none') {
@@ -198,7 +177,7 @@ export default class MyParishScreen extends Component {
     render() {
 
         const { productCartItemNumber } = this.state;
-        
+
         return (
             <Container style={Style.bgMain}>
                 <StatusBar backgroundColor="rgba(0,0,0,0)" animated barStyle="dark-content" />
@@ -207,10 +186,10 @@ export default class MyParishScreen extends Component {
                     {this.renderContent()}
                 </Content>
 
-  
+
                 <TabNav navigation={this.props.navigation}
-                    cartValue={productCartItemNumber? productCartItemNumber : 0} 
-                    gotoCart={() => this.props.navigation.navigate('ProductCartReview')} 
+                    cartValue={productCartItemNumber ? productCartItemNumber : 0}
+                    gotoCart={() => this.props.navigation.navigate('ProductCartReview')}
                 />
 
             </Container>
@@ -220,29 +199,11 @@ export default class MyParishScreen extends Component {
         );
     }
 
-    // async reloadParish() {
-
-    //     const myParishDetailStore = await this.getStorageItem('@myParishDetailStore');
-
-    //     if (myParishDetailStore) {
-    //         const myParishDetail1 = JSON.parse(myParishDetailStore);
-    //         const myParishDetail = JSON.parse(myParishDetail1);
-
-    //         if (myParishDetail && myParishDetail.id) {
-    //             this.setState({ myParishDetail })
-    //         } else {
-    //             ToastAndroid.show('You have no active Parish', ToastAndroid.SHORT);
-    //             // this.props.navigation.navigate('ParishSelector');
-    //         }
-    //     }
-    // }
-
     getParishDetail(userData, parishCode) {
         const pcode = parishCode.replace(/"/g, "");
-        var data = `userID=${userData.userID}&parishCode=${pcode}&pageNum=1&pageSize=1`;
 
         return axios
-            .post(config.apiBaseUrl + "/parish/getParish", data, {
+            .get(config.apiBaseUrl + `/merchant/getOne?username=${userData.email}&divisionCode=${pcode}&merchantID=3`, {
                 headers: {
                     "Authorization": `Bearer ${userData.access_token}`,
                     "Content-Type": "application/x-www-form-urlencoded"

@@ -295,12 +295,19 @@ export default class OnlinePayNational extends Component {
     }
 
     registerPayment(userStore, amount, parishCode, itemId) {
-        const { parishItem } = this.state;
+        const { parishItem, myParishItems } = this.state;
 
         let pcode = parishCode.replace(/"/g, "");
-        var data = `code=${pcode}&itemCodes=${parishItem}&currency=NGN&amount=${amount}&channel=web&email=${userStore.email}&quantities=1&type=0`;
-        console.log(data);
+        let newItemList = {};
+
+        if (myParishItems) {
+            newItemList = myParishItems.filter(function (obj) {
+                return obj.item_code === parishItem;
+            });
+        }
         
+        var data = `code=${pcode}&itemCodes=${parishItem}&currency=NGN&amount=${amount}&channel=web&email=${userStore.email}&quantities=1&type=0`;
+
         return axios
             .post(config.apiBaseUrl + "/transaction/add", data, {
                 headers: {
@@ -309,13 +316,12 @@ export default class OnlinePayNational extends Component {
             })
             .then(resp => {
                 const stackData = resp.data.data.data;
-                this.props.navigation.navigate('StackSelection', { paydetail: JSON.stringify(stackData), amount: amount })
+                this.props.navigation.navigate('StackSelection', { paydetail: JSON.stringify(stackData), amount: amount, itemName: newItemList[0].item_desc })
             })
             .catch(error => {
                 ToastAndroid.show('Register Payment: ' + error.message, ToastAndroid.SHORT);
             });
     }
-
 
     removeStorageItem = async (key) => {
         try {

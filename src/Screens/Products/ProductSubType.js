@@ -24,8 +24,11 @@ export default class ProductSubType extends Component {
 
     async componentDidMount() {
         const itemId = this.props.navigation.getParam('itemId', 'NO-ID');
+        const code = this.props.navigation.getParam('divisionCode', 'NO-ID'); // TODO:
+        this.setState({ divisionCode: code });
+        
         // const code = navigation.getParam('code', 'NO-ID'); // TODO:
-        this.getProductSubTypes(itemId);
+        this.getProductSubTypes(code, itemId);
         this.getCartItemNumber();
     }
 
@@ -38,15 +41,14 @@ export default class ProductSubType extends Component {
         }
     }
 
-    
     renderContent() {
-        const { productSubTypes } = this.state;
+        const { productSubTypes, divisionCode } = this.state;
 
         if(productSubTypes && productSubTypes.length > 0) {
             return productSubTypes.map((entity, key) => {
                 return (
                     <TouchableOpacity style={Styles.btnBox} onPress={() => {
-                        this.props.navigation.navigate('ProductList', { categoryId: entity.id })
+                        this.props.navigation.navigate('ProductList', { categoryId: entity.id, divisionCode })
                     }}>
                         <Image source={{ uri: entity.image_url }} resizeMode={'cover'} style={FavStyles.itemImg} />
                         <Text style={Styles.btnText}>{entity.slug}</Text>
@@ -99,19 +101,24 @@ export default class ProductSubType extends Component {
         );
     }
 
-    getProductSubTypes(typeId) {
+    getProductSubTypes(code, typeId) {
         return axios
-            .get(config.apiBaseUrl + `/product/parents?code=01&typeId=${typeId}`)
+            .get(config.apiBaseUrl + `/product/parents?code=${code}&typeId=${typeId}`)
             .then(resp => {
                 const entity = resp.data.data;
-                this.setState({ productSubTypes: entity })
+                
+                if (entity !== 'categories not found') {
+                    this.setState({ productSubTypes: entity });
+                } else {
+                    this.setState({ productSubTypes: [] });
+                }
+
+                // this.setState({ productSubTypes: entity })
             })
             .catch(error => {
                 ToastAndroid.show(error.message, ToastAndroid.SHORT);
             });
     }
-
-
 
     removeStorageItem = async (key) => {
         try {

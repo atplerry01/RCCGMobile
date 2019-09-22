@@ -56,6 +56,8 @@ export default class Product extends PureComponent {
     }
 
     async onHandleCartPress(obj) {
+        console.log(obj);
+
         this.setState({ favorite: !obj.favorite });
         const productCartItemsStore = await this.getStorageItem('@productCartItemsStore');
 
@@ -78,7 +80,18 @@ export default class Product extends PureComponent {
                 const productCartItems2 = JSON.parse(productCartItemsStore);
                 const productCartItems = JSON.parse(productCartItems2);
 
-                productCartItems.push({ favorite: true, productId: obj.id });
+                productCartItems.push({ 
+                    favorite: true, 
+                    productId: obj.id, 
+                    id: obj.id,
+                    image_url: obj.image_url,
+                    item_amount: obj.item_amount,
+                    item_description: obj.item_description,
+                    item_name: obj.item_name,
+                    item_code: obj.item_code
+                });
+
+                console.log('productCartItemsmmmmmmmm: ', productCartItems);
                 this.saveStorageItem('@productCartItemsStore', JSON.stringify(productCartItems));
             } else {
                 const productCartItems = [];
@@ -114,7 +127,7 @@ export default class Product extends PureComponent {
                 </View>
                 <View style={Styles.trash}>
                     <Button transparent onPress={
-                        this.onHandleCartPress.bind(this, { id, favorite })
+                        this.onHandleCartPress.bind(this, { id, favorite, image_url, item_name, item_description, item_amount, item_code  })
                     }>
                         <Icon
                             name={favorite ? 'shopping-cart' : 'cart-plus'}
